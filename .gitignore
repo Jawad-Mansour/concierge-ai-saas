@@ -40,7 +40,8 @@ yarn-error.log*
 .pnpm-store/
 
 # Editors
-.vscode/
+.vscode/*
+!.vscode/settings.json
 .idea/
 *.swp
 *.swo
