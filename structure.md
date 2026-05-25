@@ -68,7 +68,7 @@ concierge/
 ├── infra/
 │   ├── vault/
 │   │   ├── policies/ ................................ Mohammad
-│   │   └── seed.sh .................................. Mohammad
+│   │   └── bootstrap.sh ............................. Mohammad
 │   │
 │   ├── postgres/
 |   |   ├── Dockerfile ................................ Charbel
@@ -84,7 +84,6 @@ concierge/
 │
 ├── backend/
 |   ├── Dockerfile ................................... Charbel
-|   ├── pyproject.toml ............................... Ali
 │   ├── app/
 │   │   ├── main.py .................................. Shared Core
 │   │   │
@@ -158,7 +157,6 @@ concierge/
 │
 ├── modelserver/
 |   ├── Dockerfile ................................... Charbel
-|   ├── pyproject.toml ............................... Jana
 │   ├── app/
 │   │   ├── main.py .................................. Jana
 │   │   ├── classifier.py ............................ Jana
@@ -179,7 +177,6 @@ concierge/
 │
 ├── guardrails/
 |   ├── Dockerfile ................................... Charbel
-│   ├── pyproject.toml ............................... Jana
 │   ├── config/
 │   │   ├── rails.yaml ............................... Jana
 │   │   ├── jailbreak_rules.yaml ..................... Jana
@@ -192,7 +189,6 @@ concierge/
 │
 ├── widget/
 |   ├── Dockerfile ................................... Charbel
-|   ├── nginx.conf ................................... Charbel
 │   ├── src/
 │   │   ├── App.tsx .................................. Charbel
 │   │   ├── widget.tsx ............................... Charbel
@@ -211,7 +207,6 @@ concierge/
 │
 ├── admin/
 |   ├── Dockerfile ................................... Charbel
-│   ├── pyproject.toml ............................... Charbel
 │   ├── streamlit_app.py ............................. Charbel
 │   ├── pages/
 │   │   ├── tenant_settings.py ....................... Charbel
@@ -251,19 +246,6 @@ concierge/
     ├── create_widget_token.py ....................... Charbel
     ├── run_evals.sh ................................. Charbel
     └── delete_tenant.py ............................. Mohammad + Jana
-│
-└── demo/
-    ├── host/
-    │   ├── Dockerfile ............................... Charbel
-    │   ├── nginx.conf ............................... Charbel
-    │   └── public/
-    │       └── index.html ........................... Charbel
-    │
-    └── blocked-host/
-        ├── Dockerfile ............................... Charbel
-        ├── nginx.conf ............................... Charbel
-        └── public/
-            └── blocked.html ......................... Charbel
 ```
 
 ## Docker layout

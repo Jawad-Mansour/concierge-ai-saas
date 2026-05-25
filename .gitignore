@@ -70,6 +70,3 @@ logs/
 
 # Streamlit
 .streamlit/secrets.toml
-
-# Claude Code local state"
-.claude/
