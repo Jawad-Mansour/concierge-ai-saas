@@ -1,0 +1,10 @@
+# .github/CODEOWNERS
+/backend/app/api/auth.py          @mohammad-handle
+/backend/app/api/tenants.py       @mohammad-handle
+/backend/app/services/agent_service.py    @ali-handle
+/widget/                          @charbel-handle
+/modelserver/                     @jana-handle
+/guardrails/                      @jana-handle
+/infra/postgres/                  @mohammad-handle
+/deliverables/SECURITY.md         @jana-handle
+# ...etc
