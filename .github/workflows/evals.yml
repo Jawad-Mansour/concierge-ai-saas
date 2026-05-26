@@ -1,1 +1,34 @@
 # Owner: Charbel
+
+name: Evals
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  evals:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install PyYAML
+        run: pip install pyyaml --quiet
+
+      - name: Echo eval thresholds
+        run: |
+          python3 - <<'EOF'
+          import yaml, json
+
+          with open("eval_thresholds.yaml") as f:
+              thresholds = yaml.safe_load(f)
+
+          print("Eval thresholds loaded:")
+          print(json.dumps(thresholds, indent=2))
+          EOF
+
+      - name: Run evals (placeholder)
+        run: |
+          echo "Evals not yet implemented — owners to replace this step."
+          echo "Expected thresholds are echoed above. Exit 0 for now."

@@ -1,1 +1,90 @@
 # Owner: Charbel
+
+name: Smoke Test
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  smoke-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build and start stack
+        env:
+          DOCKER_BUILDKIT: "1"
+          ANTHROPIC_API_KEY: replace-me
+          EMBEDDINGS_API_KEY: replace-me
+          LANGFUSE_PUBLIC_KEY: replace-me
+          LANGFUSE_SECRET_KEY: replace-me
+        run: docker compose up -d --build
+
+      - name: Wait for services healthy
+        run: |
+          python3 - <<'EOF'
+          import subprocess, sys, time, json
+
+          # vault-init is a one-shot container — allow exited 0
+          ONE_SHOT = {"vault-init"}
+
+          # Services that must reach healthy
+          LONG_RUNNING = {
+              "postgres", "redis", "minio", "vault",
+              "langfuse", "backend", "modelserver", "guardrails",
+              "admin", "widget", "demo-host", "demo-blocked-host",
+          }
+
+          deadline = time.time() + 300  # 5-minute overall timeout
+          pending = set(LONG_RUNNING)
+
+          while pending and time.time() < deadline:
+              result = subprocess.run(
+                  ["docker", "compose", "ps", "--format", "json"],
+                  capture_output=True, text=True, check=True,
+              )
+              for line in result.stdout.strip().splitlines():
+                  if not line:
+                      continue
+                  svc = json.loads(line)
+                  name = svc.get("Service", "")
+                  state = svc.get("State", "")
+                  health = svc.get("Health", "")
+
+                  if name in ONE_SHOT:
+                      if state == "exited" and svc.get("ExitCode", 1) == 0:
+                          print(f"  {name}: exited 0 (ok)")
+                      elif state == "exited":
+                          print(f"  {name}: exited non-zero — aborting", file=sys.stderr)
+                          sys.exit(1)
+                      continue
+
+                  if name in pending:
+                      print(f"  {name}: state={state} health={health}")
+                      if health == "healthy":
+                          pending.discard(name)
+
+              if pending:
+                  time.sleep(10)
+
+          if pending:
+              print(f"Timed out waiting for: {pending}", file=sys.stderr)
+              subprocess.run(["docker", "compose", "logs", "--tail=50"])
+              sys.exit(1)
+
+          print("All services healthy.")
+          EOF
+
+      - name: Spot-check health endpoints
+        run: |
+          curl -sf http://localhost:8000/health
+          curl -sf http://localhost:8001/health
+          curl -sf http://localhost:8002/health
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v
