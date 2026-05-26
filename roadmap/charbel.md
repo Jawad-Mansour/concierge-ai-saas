@@ -1,1 +1,125 @@
 <!-- Owner: Charbel -->
+
+# Roadmap — Charbel
+
+**Slice:** Widget auth, admin UX, CI/CD, Docker.
+
+Append-only. End-of-day notes go at the bottom under "Daily log."
+Phases tick from top to bottom; finished items get `[x]` with the
+PR link or commit SHA in the trailing parenthesis.
+
+---
+
+## Phase 0 — Repo scaffolding & process
+
+- [x] Decide repo structure, ownership map (`structure.md`)
+- [x] PR template, CODEOWNERS, issue templates (`.github/`)
+- [x] Branch ruleset on `main` (require PR, 1 approval, block force-push, block delete)
+- [x] First scaffold PR — 148 empty files with ownership headers
+- [x] README.md + .gitignore
+- [x] `.gitattributes` + `.vscode/settings.json` for cross-platform LF (PR A)
+
+## Phase 1 — Docker stack
+
+- [x] `docker-compose.yml` at root — 13 services, healthchecks, depends_on gating
+- [x] Per-service Dockerfiles (backend, modelserver, guardrails, admin, widget, infra/postgres)
+- [x] `pyproject.toml` per Python service (backend, modelserver, guardrails, admin)
+- [x] Placeholder `main.py` per service with `"stub": True` in /health
+- [x] `infra/vault/seed.sh` — KV v2 seeds under `secret/concierge/*`
+- [x] `.env.example` with port mappings and placeholder secrets
+- [x] Demo nginx hosts (`demo/host` on 8080, `demo/blocked-host` on 8090)
+- [x] Validated end-to-end: 12 services healthy, vault-init exits 0
+- [x] modelserver image under 500MB cap, no torch verified
+
+## Phase 2 — Docker follow-ups
+
+- [ ] Fix `seed.sh` — get-or-create idempotency for `auth_jwt.signing_key`,
+      `widget_jwt.signing_key`, `service_auth.token` so restart doesn't
+      rotate keys mid-session
+- [ ] Verify idempotency: `vault kv get` before and after `restart vault-init`
+      shows byte-identical signing keys
+- [ ] Confirm `POSTGRES_PORT` override works for teammates with local Postgres
+
+## Phase 3 — CI pipeline skeleton
+
+Goal: pipeline green before there's anything real to gate. Owners
+plug their gates in as their work lands.
+
+- [ ] `.github/workflows/ci.yml` — checkout, set up uv, lint (ruff), type-check (mypy or pyright), build all images
+- [ ] `.github/workflows/smoke-test.yml` — `docker compose up -d`, wait for health, `docker compose down -v`
+- [ ] `.github/workflows/evals.yml` — runs the four eval suites; reads thresholds from `eval_thresholds.yaml`
+- [ ] `eval_thresholds.yaml` — placeholder numbers so CI has something to gate from day 1
+- [ ] Verify CI runs on PR open and on push to feature branches
+- [ ] Confirm branch ruleset requires `ci`, `smoke-test`, `evals`, `security-gates` to pass before merge
+
+## Phase 4 — Widget bundle
+
+- [ ] `widget/` Vite + React skeleton (TypeScript)
+- [ ] `widget.tsx` — chat window, message bubbles, input box
+- [ ] `loader.js` at `/widget.js` — host pastes one `<script>` tag with `data-widget-id`, loader injects iframe
+- [ ] `theme.ts` + `styles.css` — theme from tenant config at runtime
+- [ ] Read greeting + colors from tenant config at widget load
+- [ ] Widget bundle size under 100KB gzipped (target — flag if over)
+- [ ] `widget/tests/widget.test.ts` — basic render test
+
+## Phase 5 — Widget auth (the hard part)
+
+Goal: a `curl` with a copied `widget_id` from a server with no browser
+gets rejected. CORS is defense-in-depth, not the boundary.
+
+- [ ] `specs/widget_auth_SPEC.md` — write the contract BEFORE the code
+- [ ] `widget_auth_service.py` — exchanges `widget_id` + origin for a signed JWT
+      (15-min TTL, signed with `secret/concierge/widget_jwt`)
+- [ ] `api/widget.py` — POST `/widget/token` endpoint
+- [ ] `auth.ts` in widget — loader exchanges widget_id for token, attaches to every request
+- [ ] Server-side origin validation in `tenant_context` middleware:
+      reject if origin doesn't match tenant's `allowed_origins`
+- [ ] CSP `frame-ancestors` header set per tenant
+- [ ] CORS allowlist driven by tenant `allowed_origins` in DB (NOT env)
+- [ ] `tests/test_widget_auth.py` — origin spoof, expired token, copied token from different tenant, raw curl with no token
+
+## Phase 6 — Admin UX (Streamlit)
+
+- [ ] `streamlit_app.py` — overwrite placeholder; sidebar nav
+- [ ] `pages/tenant_settings.py` — basic info, allowed_origins editor
+- [ ] `pages/widget_config.py` — theme, greeting, embed snippet copy button
+- [ ] `pages/guardrails_config.py` — tenant rails (topics, persona, refusal tone) — coordinate with Jana
+- [ ] Live update without restart (read config from DB on each render)
+- [ ] Auth: only tenant_admin role can access (use fastapi-users session — coordinate with Mohammad)
+
+## Phase 7 — Friday demo polish
+
+- [ ] Update `deliverables/RUNBOOK.md` §6 with the demo script
+- [ ] Rehearse the 12-minute demo end-to-end
+- [ ] Allowed-origin proof on `localhost:8080`
+- [ ] Blocked-origin proof on `localhost:8090` (frame-ancestors CSP violation in DevTools)
+- [ ] Raw curl from `evil.com` origin returns 403
+- [ ] Tag `v0.1.0-week8` after final merge
+
+---
+
+## Daily log
+
+### Mon 2026-05-25
+
+- Repo transferred from Jawad to my account. Set up branch ruleset on `main`:
+  require PR, 1 approval (set to 0 temporarily until teammates invited),
+  required status checks (placeholder), block force-push, block delete.
+- Filled PR template and CODEOWNERS based on `structure.md` ownership map.
+- Scaffolded 148 empty files with ownership headers via Claude Code agent.
+  Renamed `prompts/*.txt` → `prompts/*.py` (storing prompts as Python
+  modules) and updated `structure.md` to match.
+- Shipped PR A: `.gitattributes` + `.vscode/settings.json`. Normalizes
+  LF for all text files; .bat/.cmd stay CRLF. Protects Windows teammates
+  from `bad interpreter: /bin/sh^M` errors.
+- Shipped PR B: full Docker stack — 13 services, all healthy after agent
+  caught and fixed 4 cross-environment issues (Alpine localhost→IPv6,
+  python:slim has no wget, Langfuse Next.js binding, nemoguardrails
+  needs g++). Image sizes verified: modelserver 410MB (under 500MB cap),
+  no torch.
+- Known issue carried to tomorrow: seed.sh isn't idempotent on signing
+  keys. Filed under Phase 2.
+
+### Tue 2026-05-26
+
+- [pending]
