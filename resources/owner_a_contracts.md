@@ -1,4 +1,4 @@
-# Owner A — Team Contracts
+# Owner A — Team Integration Guide
 
 <!-- Owner: Mohammad -->
 
@@ -7,6 +7,350 @@
 
 This file is the **single source of truth** for everything your slice depends on from mine.
 If something changes here I will update this file and flag it in the PR description.
+
+---
+
+## What I Built
+
+My slice is the foundation every other slice runs on. Nothing works without this layer.
+
+| Component | What it does |
+|-----------|-------------|
+| **Authentication** | JWT login/refresh/register. Issues tokens for `tenant_admin`, `tenant_manager`, and `member` (visitor) roles. |
+| **Authorization middleware** | `get_current_user` and `require_role` FastAPI dependencies — verify the token, extract the user, block wrong roles. |
+| **Tenant context / RLS** | `set_tenant_context` dependency — sets `app.tenant_id` on the DB connection so Postgres RLS filters rows automatically. Always resets in `finally` to prevent cross-tenant leaks across pooled connections. |
+| **Tenant provisioning** | `POST /tenants`, `PATCH /tenants/{id}`, `DELETE /tenants/{id}` — Tenant Manager only. Full erasure deletes data from every table + MinIO + Redis in the correct order. |
+| **User management** | Invite flow, user CRUD within a tenant. |
+| **Rate limiting** | Per-tenant Redis counter. Tenant A hitting the limit never affects Tenant B. Returns `HTTP 429` with `Retry-After`. |
+| **Database migrations** | All Alembic migrations. Every table I own has `tenant_id UUID NOT NULL` + RLS policy. I also write the RLS policies for Ali's tables (`leads`, `conversations`, `embeddings`) and Charbel's table (`widget_configs`). |
+| **Vault secrets** | `infra/vault/seed.sh` seeds the JWT signing key and DB credentials on first boot. All services read from Vault at runtime — never from `.env`. |
+| **Audit log** | Every Tenant Manager action (create/suspend/erase tenant) is written to `audit_log`. Cross-tenant by design — no RLS. |
+
+---
+
+## Ali — Agent, RAG, Memory, Chat
+
+### What you get from me
+
+**1. Auth dependencies — import these, do not rewrite them**
+
+```python
+from app.middleware.auth_middleware import get_current_user, require_role
+from app.middleware.tenant_context import set_tenant_context
+from app.models.user import User
+```
+
+**2. `get_current_user` — decoded User object on every request**
+
+```python
+@router.get("/leads")
+def get_leads(current_user: User = Depends(get_current_user)):
+    tenant_id = current_user.tenant_id  # UUID — always present for tenant_admin/member
+    role      = current_user.role       # "tenant_admin" | "member"
+    user_id   = current_user.id         # UUID
+```
+
+`User` fields:
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `id` | `UUID` | From the `users` table |
+| `tenant_id` | `UUID \| None` | Always set for `tenant_admin` and `member`; `None` only for `tenant_manager` |
+| `role` | `str` | `"tenant_admin"`, `"tenant_manager"`, `"member"` |
+| `email` | `str` | |
+| `is_active` | `bool` | False = suspended |
+
+**3. `require_role` — role gate, returns 403 if wrong**
+
+```python
+@router.post("/conversations")
+def create_conversation(current_user: User = Depends(require_role("tenant_admin"))):
+    ...
+```
+
+**4. `set_tenant_context` — RLS-scoped DB session**
+
+```python
+@router.get("/conversations")
+def get_conversations(db: Session = Depends(set_tenant_context)):
+    # db already has app.tenant_id set — RLS filters automatically
+    # still add explicit .filter(Conversation.tenant_id == ...) as first line of defense
+    ...
+```
+
+**5. Rate limit response — your `/chat` route will receive this from my middleware**
+
+```
+HTTP 429 Too Many Requests
+Retry-After: <seconds until window resets>
+
+Body: { "detail": "Rate limit exceeded" }
+```
+
+The counter is per-tenant, per 60-second window. Threshold: 60 messages/minute.  
+`Retry-After` = `60 - (unix_time % 60)`.
+
+**6. Redis key namespace — do not write outside this pattern**
+
+Your session keys must follow this exact format (I flush this pattern on tenant erasure):
+
+```
+session:tenant:{tenant_id}:{conversation_id}
+```
+
+Example: `session:tenant:a1b2c3d4-...:f9e8d7c6-...`
+
+**7. pgvector — every similarity search must include tenant_id filter**
+
+```python
+# CORRECT
+results = vector_store.similarity_search(
+    query_embedding,
+    k=5,
+    filter={"tenant_id": str(current_user.tenant_id)}
+)
+
+# WRONG — exposes all tenants' embeddings
+results = vector_store.similarity_search(query_embedding, k=5)
+```
+
+**8. RLS policies for your tables — I write and own these**
+
+| Table | Your model owns it | My RLS policy covers it |
+|-------|--------------------|------------------------|
+| `leads` | Ali | Yes |
+| `conversations` | Ali | Yes |
+| `embeddings` | Ali | Yes |
+
+### What I need from you
+
+| # | What I need | Why | Where I use it |
+|---|-------------|-----|----------------|
+| 1 | Confirm the embeddings table is named exactly `embeddings` | Erasure step 4: `DELETE FROM embeddings WHERE tenant_id = ?` | `scripts/delete_tenant.py` |
+| 2 | Confirm Redis session key format is `session:tenant:{tenant_id}:{conversation_id}` | Erasure step 7: flush `session:tenant:{tenant_id}:*` | `scripts/delete_tenant.py` |
+| 3 | Tell me which pgvector library you use (`pgvector-python` direct, LangChain, LlamaIndex, etc.) | The `filter=` syntax differs per library — I need to document the correct call in contracts | `owner_a_contracts.md` §7 |
+
+### Payload summary
+
+```
+I give you:
+  User { id, tenant_id, role, email, is_active }        ← via get_current_user
+  Session (DB) with app.tenant_id set                   ← via set_tenant_context
+  HTTP 429 + Retry-After header                         ← from rate limiter
+
+I need from you:
+  Confirm: table name "embeddings"
+  Confirm: Redis key "session:tenant:{tid}:{cid}"
+  Tell me: which pgvector library
+```
+
+---
+
+## Jana — Models, Security, Guardrails
+
+### What you get from me
+
+**1. JWT payload — your guardrails service reads the `role` claim**
+
+Every token I issue contains:
+
+```json
+{
+  "sub": "user-uuid-string",
+  "tenant_id": "tenant-uuid-string-or-null",
+  "role": "tenant_admin",
+  "exp": 1748999999
+}
+```
+
+The `role` field is the authoritative claim for security enforcement:
+- `tenant_manager` — platform operator, no tenant content access
+- `tenant_admin` — one business's admin, scoped to their tenant
+- `member` — anonymous visitor, scoped to one tenant via widget JWT
+
+Widget visitor tokens have `role = "member"` and `tenant_id` = the widget's tenant.  
+They are validated by `auth_middleware.py` exactly like admin tokens — same signature, same claims.
+
+**2. Auth dependency — if your guardrails sidecar needs to verify tokens**
+
+```python
+from app.middleware.auth_middleware import get_current_user
+```
+
+`get_current_user` returns the `User` object or raises `HTTP 401` if the token is invalid/expired.
+
+**3. Audit log — cross-tenant security events land here**
+
+Table: `audit_log`  
+No RLS (cross-tenant by design). Every Tenant Manager action is written here.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | UUID | |
+| `action` | str | e.g. `"erase_tenant"`, `"suspend_tenant"` |
+| `actor_id` | UUID | The Tenant Manager's user ID |
+| `target_tenant_id` | UUID | Which tenant was affected |
+| `created_at` | DateTime | UTC |
+
+**4. Rate limit response — if guardrails needs to handle 429**
+
+```
+HTTP 429 Too Many Requests
+Retry-After: <seconds>
+```
+
+### What I need from you
+
+| # | What I need | Why | Where I use it |
+|---|-------------|-----|----------------|
+| 1 | `metrics.py` function signature | I call it from Tenant Manager to attribute compute cost per tenant | `backend/app/services/tenant_service.py` |
+
+Specifically I need to know:
+- Function name
+- Parameters (does it take `tenant_id`? a date range?)
+- Return type (a float? a dict with breakdown?)
+
+### Payload summary
+
+```
+I give you:
+  JWT { sub, tenant_id, role, exp }                     ← in every Authorization header
+  User { id, tenant_id, role, email, is_active }        ← via get_current_user dependency
+  audit_log table (read-only for you)
+
+I need from you:
+  metrics.py function signature (name, params, return type)
+```
+
+---
+
+## Charbel — Widget, Admin UX, CI/CD
+
+### What you get from me
+
+**1. Auth dependencies for the admin panel**
+
+```python
+from app.middleware.auth_middleware import get_current_user, require_role
+
+# Admin dashboard — only tenant_admin
+@router.get("/admin/dashboard")
+def dashboard(current_user: User = Depends(require_role("tenant_admin"))):
+    ...
+```
+
+**2. `allowed_origins` on the Tenant model — drives your CORS and CSP**
+
+```python
+from app.repositories.tenant_repo import tenant_repo
+
+tenant = tenant_repo.get_by_id(tenant_id, db)
+origins = tenant.allowed_origins  # List[str], e.g. ["https://acme.com", "https://demo.acme.com"]
+```
+
+Use this list for:
+- CORS `Access-Control-Allow-Origin` header
+- `Content-Security-Policy: frame-ancestors` header
+- Server-side 403 check if origin not in the list
+
+**3. Widget JWT validation — I handle this for you**
+
+`auth_middleware.py` validates widget visitor tokens automatically.  
+The widget JWT your `widget_auth_service.py` generates must follow this structure:
+
+```json
+{
+  "sub": "visitor-session-uuid",
+  "tenant_id": "tenant-uuid",
+  "role": "member",
+  "exp": 1748999999
+}
+```
+
+Signed with HS256 using the key at `secret/concierge/auth_jwt.signing_key` in Vault.  
+My middleware validates it exactly like an admin token — no special handling needed on your side.
+
+**4. Auth endpoints for your admin dashboard login**
+
+`POST /auth/login`:
+```json
+Request:  { "email": "string", "password": "string" }
+Response: { "access_token": "string", "token_type": "bearer", "expires_in": 3600 }
+Errors:   401 (wrong credentials), 403 (account suspended)
+```
+
+`POST /auth/refresh`:
+```json
+Request:  empty body — send Bearer token in Authorization header
+Response: { "access_token": "string", "token_type": "bearer", "expires_in": 3600 }
+Errors:   401 (expired or invalid)
+```
+
+**5. Tenant Manager endpoints (for your admin Streamlit panel)**
+
+`GET /tenants` — list all tenants (Tenant Manager only):
+```json
+Response: [
+  {
+    "id": "uuid",
+    "name": "Acme Coffee",
+    "slug": "acme-coffee",
+    "allowed_origins": ["https://acme.com"],
+    "is_active": true,
+    "created_at": "2025-01-15T10:00:00Z"
+  }
+]
+```
+
+`POST /tenants` — create tenant:
+```json
+Request:  { "name": "string", "slug": "string", "allowed_origins": ["string"] }
+Response: { "id": "uuid", "name": "string", "slug": "string", "allowed_origins": ["string"], "is_active": true, "created_at": "datetime" }
+Errors:   409 (slug taken), 422 (validation)
+```
+
+`PATCH /tenants/{id}` — suspend/reactivate:
+```json
+Request:  { "is_active": false }
+Response: { "id": "uuid", "is_active": false, ... }
+```
+
+`DELETE /tenants/{id}` — full erasure (no body, no response body):
+```
+Response: 204 No Content
+```
+
+### What I need from you
+
+| # | What I need | Why | Where I use it |
+|---|-------------|-----|----------------|
+| 1 | Functions available in `token_utils.py` | I want to call existing widget token logic rather than duplicate it | `auth_middleware.py` widget token validation |
+| 2 | `vault/seed.sh` key generation: is it get-or-generate? | The JWT signing key must survive container restarts — it must be generated once, then reused | `infra/vault/seed.sh` |
+
+### Payload summary
+
+```
+I give you:
+  GET    /tenants              → List[Tenant]
+  POST   /tenants              ← { name, slug, allowed_origins }
+  PATCH  /tenants/{id}         ← { is_active }
+  DELETE /tenants/{id}         → 204
+  POST   /auth/login           ← { email, password }   → { access_token, token_type, expires_in }
+  POST   /auth/refresh         → { access_token, token_type, expires_in }
+  User { id, tenant_id, role } ← via get_current_user dependency
+  tenant.allowed_origins       ← via tenant_repo.get_by_id()
+
+I need from you:
+  token_utils.py function list
+  vault/seed.sh get-or-generate confirmation for JWT key
+```
+
+---
+
+## Technical Reference
+
+The sections below are the definitive, versioned contracts.
+Update the relevant section if any interface changes — not just the narrative above.
 
 ---
 
