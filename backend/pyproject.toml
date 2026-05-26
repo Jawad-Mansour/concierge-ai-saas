@@ -9,3 +9,15 @@ dependencies = [
     "uvicorn[standard]>=0.30",
     "hvac>=2.3",
 ]
+
+[dependency-groups]
+dev = ["ruff>=0.4"]
+
+[tool.ruff]
+exclude = [
+    "infra",
+    "widget",
+    "demo",
+    "admin",
+    ".github",
+]

@@ -1,1 +1,19 @@
 # Owner: Jana
+
+name: Security Gates
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  security-gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Security gates (placeholder)
+        run: |
+          echo "Security gates not yet implemented — Jana to implement."
+          echo "Exit 0 for now."

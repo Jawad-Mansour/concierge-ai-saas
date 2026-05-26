@@ -1,1 +1,12 @@
 # Owner: Charbel
+
+# Minimum passing scores per eval category (0.0–1.0).
+# All thresholds default to 0.0 (non-blocking) until owners populate baselines.
+# security is set to 1.0 — any failure is a hard block.
+
+evals:
+  intent_accuracy: 0.0
+  response_quality: 0.0
+  hallucination_rate: 0.0
+  latency_p95_ms: 0.0
+  security: 1.0
