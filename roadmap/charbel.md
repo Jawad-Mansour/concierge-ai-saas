@@ -45,10 +45,10 @@ PR link or commit SHA in the trailing parenthesis.
 Goal: pipeline green before there's anything real to gate. Owners
 plug their gates in as their work lands.
 
-- [ ] `.github/workflows/ci.yml` — checkout, set up uv, lint (ruff), type-check (mypy or pyright), build all images
-- [ ] `.github/workflows/smoke-test.yml` — `docker compose up -d`, wait for health, `docker compose down -v`
-- [ ] `.github/workflows/evals.yml` — runs the four eval suites; reads thresholds from `eval_thresholds.yaml`
-- [ ] `eval_thresholds.yaml` — placeholder numbers so CI has something to gate from day 1
+- [x] `.github/workflows/ci.yml` — checkout, set up uv, lint (ruff), type-check (mypy or pyright), build all images
+- [x] `.github/workflows/smoke-test.yml` — `docker compose up -d`, wait for health, `docker compose down -v`
+- [x] `.github/workflows/evals.yml` — runs the four eval suites; reads thresholds from `eval_thresholds.yaml`
+- [x] `eval_thresholds.yaml` — placeholder numbers so CI has something to gate from day 1
 - [ ] Verify CI runs on PR open and on push to feature branches
 - [ ] Confirm branch ruleset requires `ci`, `smoke-test`, `evals`, `security-gates` to pass before merge
 
@@ -122,4 +122,12 @@ gets rejected. CORS is defense-in-depth, not the boundary.
 
 ### Tue 2026-05-26
 
-- [pending]
+- CI skeleton landed: ci.yml (lint + build jobs), smoke-test.yml
+  (12-service health poll, 5-min timeout), evals.yml (threshold
+  reader, placeholder gates), security-gates.yml (Jana's stub).
+- eval_thresholds.yaml seeded: all gates at 0.0 except security
+  at 1.0 (injection/cross-tenant must always pass 100%).
+- ruff added to backend/pyproject.toml dev deps with [tool.ruff]
+  excludes for widget/src, demo/, node_modules.
+- Known: branch ruleset status check names need human verification
+  on GitHub after this PR merges.
