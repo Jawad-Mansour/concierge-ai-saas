@@ -315,9 +315,10 @@ Request:  { "is_active": false }
 Response: { "id": "uuid", "is_active": false, ... }
 ```
 
-`DELETE /tenants/{id}` — full erasure (no body, no response body):
+`DELETE /tenants/{id}` — full erasure (no body):
 ```
-Response: 204 No Content
+Response: 200 OK
+{ "tenant_id": "<uuid>", "status": "erased", "audit_log_entry_id": "<uuid>" }
 ```
 
 ### What I need from you
@@ -334,7 +335,7 @@ I give you:
   GET    /tenants              → List[Tenant]
   POST   /tenants              ← { name, slug, allowed_origins }
   PATCH  /tenants/{id}         ← { is_active }
-  DELETE /tenants/{id}         → 204
+  DELETE /tenants/{id}         → { "tenant_id", "status": "erased", "audit_log_entry_id" }
   POST   /auth/login           ← { email, password }   → { access_token, token_type, expires_in }
   POST   /auth/refresh         → { access_token, token_type, expires_in }
   User { id, tenant_id, role } ← via get_current_user dependency
@@ -397,8 +398,10 @@ Every access token issued by `POST /auth/login` or `POST /auth/refresh` contains
 
 **Signing**: HS256, key fetched from Vault at `secret/concierge/auth_jwt.signing_key`
 
-**Widget visitor tokens** (issued by Charbel's `widget_auth_service.py`): same structure,
-`role = "member"`, `tenant_id` = the widget's tenant. My `auth_middleware.py` validates them.
+**Widget visitor tokens** (issued by `issue_widget_token()` in `auth_service.py`): same structure,
+`role = "member"`, `tenant_id` = the widget's tenant. Signed with the **separate** key at
+`secret/concierge/widget_jwt.signing_key` (NOT `auth_jwt.signing_key`). My `auth_middleware.py`
+validates them by passing `is_widget=True` to `verify_token()`.
 
 ---
 
