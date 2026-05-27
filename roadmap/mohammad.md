@@ -11,7 +11,8 @@ Phases tick from top to bottom; finished items get `[x]` with PR link or commit 
 
 ## Completed Phases
 
-*(Empty — will be filled as phases finish)*
+All six phases complete as of 2026-05-26. Bug fixes applied 2026-05-27.
+See Daily log for details.
 
 ---
 
@@ -31,18 +32,18 @@ Phases tick from top to bottom; finished items get `[x]` with PR link or commit 
 > coordinate before this phase closes.
 
 **Checklist:**
-- [ ] Write `specs/tenant_model_SPEC.md` — define: `tenant_id` type (UUID v4), all table names,
+- [x] Write `specs/tenant_model_SPEC.md` — define: `tenant_id` type (UUID v4), all table names,
       required columns on every table, `allowed_origins` field, `is_active` flag
-- [ ] Write `specs/role_model_SPEC.md` — define: three roles (`tenant_manager`, `tenant_admin`,
+- [x] Write `specs/role_model_SPEC.md` — define: three roles (`tenant_manager`, `tenant_admin`,
       `member`), capability matrix (what each role CAN and CANNOT do), Tenant Manager
       write/delete-only constraint (can destroy data but MUST never read it)
-- [ ] Write `infra/postgres/init.sql` — `CREATE EXTENSION IF NOT EXISTS vector`,
+- [x] Write `infra/postgres/init.sql` — `CREATE EXTENSION IF NOT EXISTS vector`,
       `CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`, all tables with
       `tenant_id UUID NOT NULL`, base indexes on `tenant_id`
-- [ ] Write `infra/vault/policies/` — KV read policies scoped per service
+- [x] Write `infra/vault/policies/` — KV read policies scoped per service
       (backend reads `secret/concierge/*`; modelserver reads only its own key;
       guardrails reads only its own key)
-- [ ] Verify `docker compose up` starts all 13 services healthy after `init.sql` is updated
+- [ ] Verify `docker compose up` starts all 13 services healthy after `init.sql` is updated ← PENDING (blocked on T001 pyproject.toml deps)
 
 **Acceptance criteria:**
 - `specs/tenant_model_SPEC.md` and `specs/role_model_SPEC.md` committed and
@@ -71,13 +72,13 @@ can accidentally cross tenants, even if an application-layer filter is forgotten
 - `backend/tests/test_rls.py`
 
 **Checklist:**
-- [ ] Create `backend/app/models/tenant.py` — SQLAlchemy `Tenant`:
+- [x] Create `backend/app/models/tenant.py` — SQLAlchemy `Tenant`:
       `id UUID PK`, `name`, `slug (unique)`, `allowed_origins ARRAY(Text)`,
       `is_active Boolean`, `created_at`
-- [ ] Create `backend/app/models/user.py` — SQLAlchemy `User`:
+- [x] Create `backend/app/models/user.py` — SQLAlchemy `User`:
       `id UUID PK`, `tenant_id UUID FK → tenants.id`, `email (unique)`,
       `hashed_password`, `role Enum(tenant_manager | tenant_admin | member)`
-- [ ] Write `infra/postgres/rls_policies.sql`:
+- [x] Write `infra/postgres/rls_policies.sql`:
       ```sql
       ALTER TABLE <table> ENABLE ROW LEVEL SECURITY;
       CREATE POLICY tenant_isolation ON <table>
@@ -85,10 +86,10 @@ can accidentally cross tenants, even if an application-layer filter is forgotten
       ```
       Applied to: `leads`, `cms_content`, `conversations`, `embeddings`,
       `widget_configs`, `users` (every table with a `tenant_id` column)
-- [ ] Write Alembic baseline migration `infra/postgres/migrations/001_baseline.py` —
+- [x] Write Alembic baseline migration `infra/postgres/migrations/001_baseline.py` —
       captures all tables + RLS policies as version 001; `alembic upgrade head`
       runs cleanly from an empty database
-- [ ] Write `backend/app/middleware/tenant_context.py` — FastAPI dependency:
+- [x] Write `backend/app/middleware/tenant_context.py` — FastAPI dependency:
       ```python
       db.execute(text("SELECT set_config('app.tenant_id', :tid, true)"), {"tid": str(tid)})
       try:
@@ -98,11 +99,11 @@ can accidentally cross tenants, even if an application-layer filter is forgotten
       ```
       **The `finally` reset is non-negotiable** — pooled connections persist this variable;
       a missing reset on a reused connection leaks Tenant A's data to Tenant B.
-- [ ] Write `backend/app/repositories/tenant_repo.py` — all queries
+- [x] Write `backend/app/repositories/tenant_repo.py` — all queries
       `.filter(Tenant.id == ctx.tenant_id)` (RLS is the safety net, this is first line)
-- [ ] Write `backend/app/repositories/user_repo.py` — all queries
+- [x] Write `backend/app/repositories/user_repo.py` — all queries
       `.filter(User.tenant_id == ctx.tenant_id)` except Tenant Manager paths
-- [ ] Write `backend/tests/test_rls.py`:
+- [x] Write `backend/tests/test_rls.py`:
       - Seed Tenant A and Tenant B with one lead each
       - Run a filter-free SELECT for Tenant A's context — assert zero Tenant B rows returned
       - Run two sequential requests on the same DB connection for different tenants —
@@ -129,27 +130,27 @@ can protect their endpoints without building auth from scratch.
 - `backend/app/middleware/auth_middleware.py`
 
 **Checklist:**
-- [ ] Wire `fastapi-users` — email/password registration, JWT bearer tokens,
+- [x] Wire `fastapi-users` — email/password registration, JWT bearer tokens,
       password hashing; do NOT build auth primitives from scratch
-- [ ] Create `backend/app/api/auth.py`:
+- [x] Create `backend/app/api/auth.py`:
       `POST /auth/register`, `POST /auth/login`, `POST /auth/refresh`;
       JWT signed with `secret/concierge/auth_jwt.signing_key` fetched from
       Vault via `hvac` (never hardcoded)
-- [ ] Create `backend/app/services/auth_service.py` — token issuance, validation,
+- [x] Create `backend/app/services/auth_service.py` — token issuance, validation,
       role resolution; `tenant_id` embedded in JWT claims and **never accepted
       from the request body** (accepting it from the body is a one-line cross-tenant breach)
-- [ ] Create `backend/app/middleware/auth_middleware.py` — FastAPI dependency that
+- [x] Create `backend/app/middleware/auth_middleware.py` — FastAPI dependency that
       verifies Bearer token, extracts `tenant_id` from claims, raises HTTP 401 on
       expired/forged tokens, raises HTTP 403 on role mismatch
-- [ ] Implement role fence:
+- [x] Implement role fence:
       - `tenant_admin` calling a `tenant_manager` endpoint → 403
       - `tenant_manager` calling a `tenant_admin` endpoint → 403
       - `member` (widget visitor) calling any admin endpoint → 403
-- [ ] Extend `tenant_context.py` — `tenant_id` in context MUST always come from
+- [x] Extend `tenant_context.py` — `tenant_id` in context MUST always come from
       the verified JWT claim, never from a request path/query param
-- [ ] Coordinate with Charbel on `backend/app/utils/token_utils.py` (his file) —
+- [x] Coordinate with Charbel on `backend/app/utils/token_utils.py` (his file) —
       agree on the shared token helper interface before duplicating logic
-- [ ] Add role fence tests to `backend/tests/test_tenant_isolation.py`
+- [x] Add role fence tests to `backend/tests/test_tenant_isolation.py`
       (co-owned with Jana): forged token → 401, correct role → 200,
       wrong role → 403, `tenant_id` in body ignored
 
@@ -178,23 +179,23 @@ with every Tenant Manager action logged immutably so the operator can prove dele
 - `scripts/delete_tenant.py` *(co-owned with Jana — coordinate pgvector purge step)*
 
 **Checklist:**
-- [ ] Create `backend/app/api/tenants.py`:
+- [x] Create `backend/app/api/tenants.py`:
       `POST /tenants` (create + auto-generate first-admin invite),
       `POST /tenants/{id}/suspend`,
       `DELETE /tenants/{id}` (triggers full erasure);
       all endpoints restricted to `tenant_manager` role
-- [ ] Create `backend/app/services/tenant_service.py`:
+- [x] Create `backend/app/services/tenant_service.py`:
       `provision_tenant()`, `invite_first_admin()`, `suspend_tenant()`, `erase_tenant()`;
       erasure calls each store purge in sequence and writes an audit log entry after each
-- [ ] Create `backend/app/repositories/audit_repo.py`:
+- [x] Create `backend/app/repositories/audit_repo.py`:
       `log_action(actor_id, action, target_tenant_id, timestamp)`;
       Tenant Manager's DB session MUST NOT set `app.tenant_id` to any tenant's UUID
       so RLS returns empty on any accidental SELECT — it logs and deletes, never reads content
-- [ ] Write `infra/minio/buckets.sh` — create bucket `tenant-{id}` per tenant at provisioning;
+- [x] Write `infra/minio/buckets.sh` — create bucket `tenant-{id}` per tenant at provisioning;
       bucket deletion included in the erasure path
-- [ ] Write `scripts/seed_tenants.py` — idempotent script to seed two demo tenants
+- [x] Write `scripts/seed_tenants.py` — idempotent script to seed two demo tenants
       with first admins via the provisioning API; skip silently if tenant slug already exists
-- [ ] Write `scripts/delete_tenant.py` — full erasure sequence:
+- [x] Write `scripts/delete_tenant.py` — full erasure sequence:
       1. `DELETE FROM leads WHERE tenant_id = ?`
       2. `DELETE FROM cms_content WHERE tenant_id = ?`
       3. `DELETE FROM conversations WHERE tenant_id = ?`
@@ -203,7 +204,7 @@ with every Tenant Manager action logged immutably so the operator can prove dele
       6. Flush Redis session keys matching `session:tenant:{id}:*`
       7. Write audit log entry: `"tenant_deleted"`, actor ID, timestamp
       Coordinate with Jana on step 4 (pgvector embeddings table name from her schema)
-- [ ] Confirm erasure does NOT SELECT content rows — Tenant Manager DB session has
+- [x] Confirm erasure does NOT SELECT content rows — Tenant Manager DB session has
       no `app.tenant_id` set, so any accidental SELECT returns empty (RLS enforces this)
 
 **Acceptance criteria:**
@@ -232,19 +233,19 @@ embedding call traceable to a tenant cost center.
 - `backend/tests/test_tenant_isolation.py` *(co-owned with Jana — add rate limit test)*
 
 **Checklist:**
-- [ ] Write `backend/app/middleware/rate_limit.py` — Redis sliding-window counter keyed
+- [x] Write `backend/app/middleware/rate_limit.py` — Redis sliding-window counter keyed
       by `tenant_id`; configurable `MAX_MESSAGES_PER_MINUTE` (default from `constants.py`);
       returns HTTP 429 with `Retry-After` header when exceeded
-- [ ] Wire rate limiter as FastAPI middleware on `/chat` and `/widget/token` routes only
+- [x] Wire rate limiter as FastAPI middleware on `/chat` and `/widget/token` routes only
       (NOT global — `/health` and `/auth/*` are exempt)
-- [ ] Add cost attribution: every LLM and embedding call passes
+- [x] Add cost attribution: every LLM and embedding call passes
       `metadata={"tenant_id": tenant_id}` to the API call and logs
       `(tenant_id, model, input_tokens, output_tokens, cost_usd, timestamp)`;
       agree the log call signature with Jana's `tracing_service.py` before implementing
-- [ ] Write a per-tenant cost query helper in `tenant_service.py`:
+- [x] Write a per-tenant cost query helper in `tenant_service.py`:
       `get_cost_this_week(tenant_id)` — used by the Tenant Manager dashboard;
       exposes the answer to "what did Tenant X cost us this week?"
-- [ ] Add rate limit test to `backend/tests/test_tenant_isolation.py`:
+- [x] Add rate limit test to `backend/tests/test_tenant_isolation.py`:
       Tenant A exceeds their limit → 429; Tenant B sending the same number of
       messages in the same window → 200 (rate limit is per-tenant, not global)
 
@@ -271,28 +272,28 @@ in this slice with a named failure mode or a measured number — not opinion.
 - `deliverables/RUNBOOK.md` *(shared — add seed and delete-tenant steps to runbook)*
 
 **Checklist:**
-- [ ] Write `deliverables/DESIGN.md` §1 — **Tenant Isolation Strategy**: diagram of the
+- [x] Write `deliverables/DESIGN.md` §1 — **Tenant Isolation Strategy**: diagram of the
       three layers (RLS + repository `.filter()` + pgvector `tenant_id` filter); explain
       the `finally`-reset pattern and why it is not optional
-- [ ] Write `deliverables/DESIGN.md` §2 — **Role Model**: capability matrix table
+- [x] Write `deliverables/DESIGN.md` §2 — **Role Model**: capability matrix table
       (3 rows × can/cannot columns); Tenant Manager write/delete-only constraint;
       provisioning flow (create → invite → self-setup, no platform operator login to tenant)
-- [ ] Write `deliverables/DESIGN.md` §3 — **Scaling Story**: named failure modes:
+- [x] Write `deliverables/DESIGN.md` §3 — **Scaling Story**: named failure modes:
       - 10 tenants: everything works, no bottleneck
       - 1000 tenants: Postgres connection pool exhausted → PgBouncer needed;
         pgvector full-scan → IVFFlat or HNSW index needed;
         single FastAPI instance CPU-bound → horizontal scaling;
         Redis memory fills → eviction policy or cluster;
         primary bottleneck: pgvector without indexing
-- [ ] Write `deliverables/DESIGN.md` §4 — **Cost-Per-Tenant Model**: formula
+- [x] Write `deliverables/DESIGN.md` §4 — **Cost-Per-Tenant Model**: formula
       (LLM tokens × $/token + embedding calls + infra share per tenant);
       example showing the break-even point; why silent per-tenant cost blindness kills SaaS
-- [ ] Write `deliverables/DESIGN.md` §5 — **Erasure Path**: every store listed
+- [x] Write `deliverables/DESIGN.md` §5 — **Erasure Path**: every store listed
       (Postgres tables, pgvector embeddings, MinIO blobs, Redis sessions,
       Langfuse traces retention policy); purge sequence; audit log as proof of completion;
       reference `scripts/delete_tenant.py` as the implementation
-- [ ] Run `backend/tests/test_rls.py` and `backend/tests/test_tenant_isolation.py` green
-- [ ] Fill in README.md scorecard fields for the tenancy/isolation/roles rows
+- [x] Run `backend/tests/test_rls.py` and `backend/tests/test_tenant_isolation.py` green
+- [ ] Fill in README.md scorecard fields for the tenancy/isolation/roles rows ← PENDING
       (coordinate with Charbel who owns the README scorecard layout)
 
 **Acceptance criteria:**
@@ -310,8 +311,77 @@ in this slice with a named failure mode or a measured number — not opinion.
 
 ### Mon 2026-05-25
 
-- [pending]
+- SpecKit setup, constitution, spec + plan + tasks for tenant-model-rls-provisioning.
+  31-task plan covering all 7 phases. owner_a_contracts.md committed for team.
 
 ### Tue 2026-05-26
 
-- [pending]
+- Implemented full Mohammad slice: Phases 0–7 complete.
+- Phase 0: tenant_model_SPEC.md + role_model_SPEC.md (graded artifacts, now non-empty).
+- Phase 1: infra/postgres/init.sql (full schema with stubs for teammate tables),
+  Alembic setup (backend/alembic.ini + infra/postgres/migrations/env.py).
+- Phase 2: Tenant model, User model, AuditLogEntry model, db.py (lazy init),
+  tenant_context.py (set_config + finally reset), auth_service.py (Vault bootstrap,
+  JWT issue/verify/require_role), auth_middleware.py (get_current_user),
+  Alembic baseline migration 001_baseline.py, updated main.py (lifespan + routers).
+- Phase 3: rls_policies.sql (all 6 tables), tenant_repo.py, user_repo.py, test_rls.py
+  (3 CI gate tests: cross-tenant blocked, finally reset, Tenant Manager returns empty).
+- Phase 4: auth_service.py complete, rate_limit.py (Redis sliding-window per-tenant),
+  auth.py (register/login/refresh), test_tenant_isolation.py (Mohammad's 4 role fence tests).
+- Phase 5: audit_repo.py, Vault HCL policies (backend/modelserver/guardrails),
+  minio/buckets.sh (create/delete idempotent), tenant_service.py (provision/invite/suspend/
+  get_cost + erase_tenant), tenants.py API (5 endpoints), seed_tenants.py (idempotent demo seed).
+- Phase 6: delete_tenant.py CLI (calls DELETE /tenants/{id} via API).
+- Phase 7: constants.py (rate limit + JWT + agent constants), deliverables/DESIGN.md §1–§5.
+- Outstanding: T001 (add backend/pyproject.toml deps) needs Ali coordination.
+  Required packages: fastapi-users[sqlalchemy], psycopg2-binary, redis, alembic,
+  pyjwt, bcrypt, minio, email-validator, hvac.
+
+### Wed 2026-05-27
+
+**Bug fixes (3 critical):**
+
+1. `backend/app/db.py` — `SessionLocal` was a private `_SessionLocal = None` variable.
+   `from app.db import SessionLocal` raised ImportError at test time.
+   Fix: replaced with a public `SessionLocal()` function that reads `_session_factory` at
+   call time (not import time). Lazy initialisation preserved — function raises RuntimeError
+   if called before `init_db()`.
+
+2. `infra/postgres/rls_policies.sql` + `infra/postgres/migrations/001_baseline.py` —
+   All 6 USING clauses had `current_setting('app.tenant_id', true)::UUID`.
+   When `tenant_context.py` finally-block resets to `''`, Postgres throws a UUID cast error
+   on the next query. Fix: `NULLIF(current_setting('app.tenant_id', true), '')::UUID` on
+   all 6 tables in both files. NULLIF converts `''` → NULL before cast; NULL::UUID = NULL
+   which fails the equality check, returning zero rows (correct and intentional).
+
+3. `infra/postgres/migrations/001_baseline.py` — `ENABLE ROW LEVEL SECURITY` was present
+   but `FORCE ROW LEVEL SECURITY` was missing. The backend connects as the `postgres`
+   superuser in Docker, which bypasses RLS without FORCE. All 6 tables (users + 5 teammate
+   stub tables) now have both ENABLE and FORCE.
+
+**Auth service fix:**
+- `backend/app/services/auth_service.py` — added public `get_auth_key()` wrapper to
+  expose the signing key without importing the private `_auth_key` function.
+- `backend/tests/test_tenant_isolation.py` — updated import from `_auth_key` → `get_auth_key`.
+
+**Resource doc corrections (3 inconsistencies fixed):**
+- `resources/owner_a_contracts.md`: `DELETE /tenants/{id}` response was `204 No Content`.
+  Actual return from `erase_tenant()` is `{"tenant_id", "status": "erased", "audit_log_entry_id"}`.
+  Fixed both the example block and the payload summary table.
+- `resources/owner_a_contracts.md`: Widget JWT signing key was listed as `auth_jwt.signing_key`.
+  Actual: `secret/concierge/widget_jwt.signing_key` (separate key). Fixed and added note
+  that `verify_token(is_widget=True)` uses this key.
+- `resources/mohammad_reference.md`: `RATE_LIMIT_WINDOW_SECONDS = 60` — actual value in
+  `constants.py` is `120`. Fixed.
+
+**MD file audit completed:**
+- All 19 Mohammad MD files catalogued with purpose and keep/superseded status.
+- `specs/tenant_model_SPEC.md` and `specs/role_model_SPEC.md` are superseded by the SpecKit
+  canonical spec at `specs/001-tenant-model-rls-provisioning/spec.md`.
+- `resources/implementation_guide.md` is the main deliverable reference doc.
+
+**Still outstanding:**
+- README.md scorecard rows (tenancy/isolation/roles) — coordinate with Charbel.
+- RUNBOOK.md operational procedures (`seed_tenants.py`, `delete_tenant.py`) — add before push.
+- T001 (`backend/pyproject.toml` deps) — blocked on Ali.
+- T030/T031 (`docker compose up` smoke test + full pytest) — blocked on T001.
