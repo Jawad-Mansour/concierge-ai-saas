@@ -1,0 +1,117 @@
+# OpenAPI 3.1 contract for POST /predict.
+# Shared component schemas live in shared-schemas.yaml.
+
+openapi: 3.1.0
+info:
+  title: Classifier Service — /predict
+  version: 1.0.0
+  description: |
+    Returns one of five intent classes plus a confidence in [0, 1] for the
+    given visitor message. Called by backend/app/services/classifier_client.py
+    on every incoming chat turn before any other routing decision is made.
+    See spec.md User Stories 1–6 and FR-001..FR-014.
+
+paths:
+  /predict:
+    post:
+      operationId: predict
+      summary: Classify a visitor message into one of five intent classes.
+      security:
+        - ServiceCredential: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'shared-schemas.yaml#/components/schemas/PredictRequest'
+            examples:
+              faq:
+                summary: Clear factual question that CMS can answer.
+                value:
+                  tenant_id: "tenant-acme"
+                  message: "What are your business hours?"
+              spam:
+                summary: Junk advertising; expected SPAM with high confidence.
+                value:
+                  tenant_id: "tenant-acme"
+                  message: "BUY CHEAP MEDS NOW!!! click http://spammy.example"
+              contact_lead:
+                summary: Visitor sharing contact info / interest.
+                value:
+                  tenant_id: "tenant-acme"
+                  message: "I'm interested in pricing — can you call me at +1-555-0123?"
+              hard_question:
+                summary: Multi-part, requires reasoning.
+                value:
+                  tenant_id: "tenant-acme"
+                  message: "Can you compare your enterprise plan to the team plan, and tell me if the SLA covers EU data residency?"
+              ambiguous:
+                summary: Could go several ways; expected UNKNOWN (confidence > 0).
+                value:
+                  tenant_id: "tenant-acme"
+                  message: "hey"
+      responses:
+        '200':
+          description: |
+            Prediction completed (normally, with low confidence, or via the
+            timeout-degraded fallback path). Discriminator is the value of
+            `confidence`: exactly 0.0 means timeout-degraded.
+          content:
+            application/json:
+              schema:
+                $ref: 'shared-schemas.yaml#/components/schemas/PredictResponse'
+              examples:
+                normal_faq:
+                  summary: Confident FAQ classification.
+                  value:
+                    predicted_class: "FAQ"
+                    confidence: 0.92
+                    model_hash: "a1b2c3d4e5f6"
+                normal_spam:
+                  summary: Confident SPAM classification.
+                  value:
+                    predicted_class: "SPAM"
+                    confidence: 0.98
+                    model_hash: "a1b2c3d4e5f6"
+                low_confidence_unknown:
+                  summary: |
+                    Model evaluated normally but max(predict_proba) fell below
+                    the UNKNOWN-escalation threshold. Router escalates to the
+                    agent. Note confidence is > 0.
+                  value:
+                    predicted_class: "UNKNOWN"
+                    confidence: 0.18
+                    model_hash: "a1b2c3d4e5f6"
+                timeout_degraded:
+                  summary: |
+                    Inference exceeded the 200ms hard timeout (or raised, or
+                    hit an unexpected exception). Reserved confidence == 0.0
+                    distinguishes this from a low-confidence UNKNOWN. The
+                    trace span carries classifier.degraded=true (FR-009).
+                  value:
+                    predicted_class: "UNKNOWN"
+                    confidence: 0.0
+                    model_hash: "a1b2c3d4e5f6"
+        '401':
+          description: |
+            Missing, expired, or otherwise invalid service credential. Body is
+            identical across all three cases — no information leak (FR-004).
+          content:
+            application/json:
+              schema:
+                $ref: 'shared-schemas.yaml#/components/schemas/UnauthenticatedResponse'
+              example:
+                detail: "unauthenticated"
+        '422':
+          description: |
+            Malformed request (missing required field, empty message, body too
+            large). Structured error; no partial prediction (FR-005).
+          content:
+            application/json:
+              schema:
+                $ref: 'shared-schemas.yaml#/components/schemas/ValidationErrorResponse'
+
+components:
+  securitySchemes:
+    ServiceCredential:
+      $ref: 'shared-schemas.yaml#/components/securitySchemes/ServiceCredential'
