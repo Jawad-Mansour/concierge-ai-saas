@@ -18,7 +18,6 @@ from sqlalchemy.orm import Session
 from app.services.auth_service import (
     JWT_ALGORITHM,
     get_auth_key,
-    issue_invite_token,
     issue_token,
 )
 from app.models.user import Role

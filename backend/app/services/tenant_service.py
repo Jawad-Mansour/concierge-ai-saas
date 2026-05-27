@@ -7,7 +7,6 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.repositories import audit_repo, tenant_repo
-from app.models.user import Role
 from app.services import auth_service
 
 

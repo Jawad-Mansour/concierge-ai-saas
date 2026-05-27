@@ -9,7 +9,6 @@ Run with:
     docker compose run --rm backend python -m pytest backend/tests/test_tenant_isolation.py -v
 """
 
-import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app

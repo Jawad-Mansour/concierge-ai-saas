@@ -54,7 +54,7 @@ def erase_tenant(tenant_id: str, token: str) -> None:
         sys.exit(1)
 
     result = resp.json()
-    print(f"Erasure complete:")
+    print("Erasure complete:")
     print(f"  tenant_id:          {result['tenant_id']}")
     print(f"  status:             {result['status']}")
     print(f"  audit_log_entry_id: {result['audit_log_entry_id']}")
