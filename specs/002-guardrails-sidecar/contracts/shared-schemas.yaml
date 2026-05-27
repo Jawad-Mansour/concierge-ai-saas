@@ -1,0 +1,208 @@
+# OpenAPI 3.1 component schemas shared by /check/input and /check/output.
+# Authoritative against data-model.md; the Pydantic v2 models in
+# guardrails/app/schemas.py mirror this file. PRs that change one without
+# changing the other are rejected in review.
+
+openapi: 3.1.0
+info:
+  title: Guardrails Sidecar — shared component schemas
+  version: 1.0.0
+
+components:
+  securitySchemes:
+    ServiceCredential:
+      type: http
+      scheme: bearer
+      description: |
+        Vault-issued service credential. The sidecar validates the token in
+        constant time against the credential fetched at boot and rejects every
+        invalid request with HTTP 401 and a fixed body — see Principle V and
+        FR-008. The 401 body is identical for missing, expired, and otherwise
+        invalid credentials.
+
+  schemas:
+
+    TenantId:
+      type: string
+      pattern: '^[A-Za-z0-9_-]+$'
+      minLength: 1
+      maxLength: 64
+      description: Opaque tenant identifier. Used for tracing only.
+
+    Decision:
+      type: string
+      enum: [pass, block]
+
+    RuleName:
+      type: string
+      enum:
+        - prompt_injection      # platform
+        - jailbreak             # platform
+        - cross_tenant          # platform
+        - off_topic             # tenant
+        - escalation_trigger    # tenant
+        - engine_error          # fail-closed
+        - config_error          # fail-closed
+
+    Action:
+      type: string
+      enum:
+        - safe_refusal
+        - tenant_refusal
+        - escalate
+        - fallback_response
+      description: |
+        What the backend should do next. Closed vocabulary. The backend's
+        guardrail_service MUST raise on receiving an unknown value (Principle VI).
+
+    RecognizerName:
+      type: string
+      enum:
+        - EMAIL_ADDRESS
+        - PHONE_NUMBER
+        - CREDIT_CARD
+        - US_SSN
+        - GENERIC_BEARER_TOKEN
+        - HOSTED_LLM_API_KEY_ANTHROPIC
+        - HOSTED_LLM_API_KEY_OPENAI
+
+    RefusalPersona:
+      type: object
+      additionalProperties: false
+      required: [voice, template]
+      properties:
+        voice:
+          type: string
+          example: "formal"
+        template:
+          type: string
+          description: |
+            Refusal text the engine composes when an off-topic block fires.
+            May contain {reason} and {topic} placeholders.
+
+    EscalationTrigger:
+      type: object
+      additionalProperties: false
+      required: [kind, value]
+      properties:
+        kind:
+          type: string
+          enum: [keyword, intent]
+        value:
+          type: string
+
+    TenantConfig:
+      type: object
+      additionalProperties: false
+      description: |
+        Per-tenant rail configuration, supplied on every call. Validated by
+        the admin app at config-write time (FR-011); the sidecar treats it
+        as well-formed. If absent/malformed, the orchestrator's fail-closed
+        wrapper returns rule_name=config_error.
+      properties:
+        allowed_topics:
+          type: array
+          items: { type: string }
+          nullable: true
+        refusal_persona:
+          $ref: '#/components/schemas/RefusalPersona'
+          nullable: true
+        escalation_triggers:
+          type: array
+          items: { $ref: '#/components/schemas/EscalationTrigger' }
+          nullable: true
+
+    RedactionMetadata:
+      type: object
+      additionalProperties: false
+      required: [recognizers_fired, match_count]
+      description: |
+        Carries which recognizers fired and how many redactions happened.
+        MUST NOT carry matched values, original substrings, or character
+        offsets — Principle IX / FR-014.
+      properties:
+        recognizers_fired:
+          type: array
+          items: { $ref: '#/components/schemas/RecognizerName' }
+          description: Deduplicated, order-stable for testing.
+        match_count:
+          type: integer
+          minimum: 0
+
+    EvaluationResponsePass:
+      type: object
+      additionalProperties: false
+      required: [decision, payload, redaction]
+      properties:
+        decision:
+          type: string
+          enum: [pass]
+        payload:
+          type: string
+          description: |
+            The (possibly redacted) text the caller should use downstream.
+            Same length bound as the corresponding input field.
+        redaction:
+          oneOf:
+            - $ref: '#/components/schemas/RedactionMetadata'
+            - type: 'null'
+          description: Non-null iff any redaction was applied.
+
+    EvaluationResponseBlock:
+      type: object
+      additionalProperties: false
+      required: [decision, rule_name, action, refusal_text]
+      description: |
+        MUST NOT carry the original payload or any substring of it (Principle
+        VI / IX). Only rule_name, action, and optionally refusal_text.
+      properties:
+        decision:
+          type: string
+          enum: [block]
+        rule_name:
+          $ref: '#/components/schemas/RuleName'
+        action:
+          $ref: '#/components/schemas/Action'
+        refusal_text:
+          oneOf:
+            - type: string
+            - type: 'null'
+          description: |
+            Non-null only when action=tenant_refusal. Carries the tenant's
+            configured refusal language and tone (FR-006).
+
+    EvaluationResponse:
+      oneOf:
+        - $ref: '#/components/schemas/EvaluationResponsePass'
+        - $ref: '#/components/schemas/EvaluationResponseBlock'
+      discriminator:
+        propertyName: decision
+        mapping:
+          pass: '#/components/schemas/EvaluationResponsePass'
+          block: '#/components/schemas/EvaluationResponseBlock'
+
+    UnauthenticatedResponse:
+      type: object
+      additionalProperties: false
+      required: [detail]
+      description: |
+        Returned with HTTP 401 for every missing/expired/invalid credential.
+        Body is identical across the three cases — no information leak (FR-008).
+      properties:
+        detail:
+          type: string
+          enum: ["unauthenticated"]
+
+    ValidationErrorResponse:
+      type: object
+      additionalProperties: false
+      required: [detail]
+      description: |
+        Returned with HTTP 422 for malformed requests (missing required field,
+        empty message, body too long). Structured; no partial evaluation.
+      properties:
+        detail:
+          type: array
+          description: FastAPI/Pydantic standard validation error array.
+          items:
+            type: object

@@ -71,5 +71,14 @@ logs/
 # Streamlit
 .streamlit/secrets.toml
 
-# Claude Code local state"
+# Claude Code local state (personal — not committed)
 .claude/
+CLAUDE.md
+.specify/
+
+# Personal planning workspace (SpecKit — not committed)
+001-tenant-model-rls-provisioning/
+
+# Resources — personal files stay local; team contracts committed
+resources/*
+!resources/owner_a_contracts.md

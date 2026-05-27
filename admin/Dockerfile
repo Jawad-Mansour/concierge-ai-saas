@@ -1,14 +1,31 @@
 # Owner: Charbel
 
+# ── deps stage ───────────────────────────────────────────────
+FROM python:3.12-slim AS deps
+
+# Install uv via pip — avoids ghcr.io which is blocked on some networks
+RUN pip install uv==0.5.4 --no-cache-dir
+
+ENV VIRTUAL_ENV=/opt/venv \
+    UV_PROJECT_ENVIRONMENT=/opt/venv \
+    UV_LINK_MODE=copy \
+    UV_COMPILE_BYTECODE=1 \
+    UV_PYTHON_DOWNLOADS=never \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+RUN uv venv $VIRTUAL_ENV
+
+WORKDIR /app
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --no-dev --python $VIRTUAL_ENV/bin/python
+
+# ── runtime ──────────────────────────────────────────────────
 FROM python:3.12-slim
 
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+COPY --from=deps /opt/venv /opt/venv
 
 ENV VIRTUAL_ENV=/opt/venv
-RUN uv venv $VIRTUAL_ENV && \
-    uv pip install --python $VIRTUAL_ENV/bin/python --no-cache \
-    streamlit hvac requests
-
 ENV PATH="/opt/venv/bin:$PATH"
 
 WORKDIR /app

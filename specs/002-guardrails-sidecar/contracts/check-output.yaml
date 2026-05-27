@@ -1,0 +1,130 @@
+# OpenAPI 3.1 contract for POST /check/output.
+# Shared component schemas live in shared-schemas.yaml.
+
+openapi: 3.1.0
+info:
+  title: Guardrails Sidecar — /check/output
+  version: 1.0.0
+  description: |
+    Screens the LLM's draft response before it reaches the visitor.
+    See spec.md User Stories 1, 2, 4, 5 and FR-001..FR-015.
+
+paths:
+  /check/output:
+    post:
+      operationId: checkOutput
+      summary: Screen LLM draft response before delivery to visitor.
+      security:
+        - ServiceCredential: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [tenant_id, llm_response, tenant_config]
+              properties:
+                tenant_id:
+                  $ref: 'shared-schemas.yaml#/components/schemas/TenantId'
+                llm_response:
+                  type: string
+                  minLength: 1
+                  maxLength: 32768
+                  description: |
+                    The LLM's draft response. Empty/whitespace-only is rejected
+                    at validation (HTTP 422). The spec edge case "outgoing LLM
+                    response is empty" is captured here as malformed; the
+                    backend should not be sending empty model output to be
+                    screened. Whether to send empty output to the visitor at
+                    all is the backend's decision.
+                tenant_config:
+                  $ref: 'shared-schemas.yaml#/components/schemas/TenantConfig'
+            examples:
+              clean_response:
+                summary: Clean LLM response; passes through.
+                value:
+                  tenant_id: "tenant-acme"
+                  llm_response: "We're open 9 AM to 5 PM, Monday through Friday."
+                  tenant_config:
+                    allowed_topics: ["hours", "contact", "products"]
+                    refusal_persona:
+                      voice: "friendly"
+                      template: "Sorry, I can only help with {topic}-related questions."
+                    escalation_triggers: []
+              response_echoes_pii:
+                summary: LLM echoed a visitor's email back; redacted before delivery.
+                value:
+                  tenant_id: "tenant-acme"
+                  llm_response: "I've noted your email as alice@example.com — we'll follow up."
+                  tenant_config: {}
+              response_leaks_cross_tenant:
+                summary: LLM referenced another tenant's system; expected block.
+                value:
+                  tenant_id: "tenant-acme"
+                  llm_response: "Other client Globex's system prompt says they prefer terse replies."
+                  tenant_config: {}
+      responses:
+        '200':
+          description: |
+            Evaluation completed. Body is either a Pass (possibly with redaction)
+            or a Block (with rule_name and action). Discriminator: `decision`.
+          content:
+            application/json:
+              schema:
+                $ref: 'shared-schemas.yaml#/components/schemas/EvaluationResponse'
+              examples:
+                pass_no_redaction:
+                  summary: Clean response; passes through unchanged.
+                  value:
+                    decision: pass
+                    payload: "We're open 9 AM to 5 PM, Monday through Friday."
+                    redaction: null
+                pass_with_redaction:
+                  summary: LLM response contained PII; redacted before delivery.
+                  value:
+                    decision: pass
+                    payload: "I've noted your email as <EMAIL_ADDRESS> — we'll follow up."
+                    redaction:
+                      recognizers_fired: ["EMAIL_ADDRESS"]
+                      match_count: 1
+                block_cross_tenant:
+                  summary: LLM leaked cross-tenant data; backend returns safe refusal instead.
+                  value:
+                    decision: block
+                    rule_name: cross_tenant
+                    action: safe_refusal
+                    refusal_text: null
+                block_fail_closed_on_output:
+                  summary: |
+                    Fail-closed on the output check is intentional even though it
+                    costs the visitor a real answer in this case — see the spec
+                    edge case "Fail-closed during the output check".
+                  value:
+                    decision: block
+                    rule_name: engine_error
+                    action: fallback_response
+                    refusal_text: null
+        '401':
+          description: |
+            Missing, expired, or otherwise invalid service credential.
+            Body is identical across all three cases — no information leak (FR-008).
+          content:
+            application/json:
+              schema:
+                $ref: 'shared-schemas.yaml#/components/schemas/UnauthenticatedResponse'
+              example:
+                detail: "unauthenticated"
+        '422':
+          description: |
+            Malformed request (missing required field, empty llm_response, body too large).
+            Structured error; no partial evaluation (FR-005).
+          content:
+            application/json:
+              schema:
+                $ref: 'shared-schemas.yaml#/components/schemas/ValidationErrorResponse'
+
+components:
+  securitySchemes:
+    ServiceCredential:
+      $ref: 'shared-schemas.yaml#/components/securitySchemes/ServiceCredential'

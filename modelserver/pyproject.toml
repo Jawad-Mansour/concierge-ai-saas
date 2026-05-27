@@ -8,8 +8,17 @@ dependencies = [
     "fastapi>=0.115",
     "uvicorn[standard]>=0.30",
     "hvac>=2.3",
+    "pydantic>=2.0",
     "onnxruntime>=1.18",
     "scikit-learn>=1.5",
     "numpy>=1.26",
     "joblib>=1.4",
+]
+
+[project.optional-dependencies]
+training = [
+    "jupyter>=1.1",
+    "matplotlib>=3.9",
+    "skl2onnx>=1.17",
+    "transformers>=4.44",
 ]
