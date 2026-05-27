@@ -33,10 +33,10 @@ PR link or commit SHA in the trailing parenthesis.
 
 ## Phase 2 — Docker follow-ups
 
-- [ ] Fix `seed.sh` — get-or-create idempotency for `auth_jwt.signing_key`,
+- [x] Fix `seed.sh` — get-or-create idempotency for `auth_jwt.signing_key`,
       `widget_jwt.signing_key`, `service_auth.token` so restart doesn't
       rotate keys mid-session
-- [ ] Verify idempotency: `vault kv get` before and after `restart vault-init`
+- [x] Verify idempotency: `vault kv get` before and after `restart vault-init`
       shows byte-identical signing keys
 - [ ] Confirm `POSTGRES_PORT` override works for teammates with local Postgres
 
@@ -164,3 +164,8 @@ gets rejected. CORS is defense-in-depth, not the boundary.
   Removed continue-on-error from CI. Integration tests now run in
   smoke-test workflow against the live stack.
 - Registered integration mark in pyproject.toml.
+- Phase 2 done: seed.sh get-or-create idempotency for auth_jwt,
+  widget_jwt, service_auth signing keys. Verified: vault-init
+  restart produces byte-identical keys. ANTHROPIC_API_KEY comment
+  clarified in .env.example — real key from Charbel, forwarded
+  to Vault by vault-init, never read from .env directly by services.
