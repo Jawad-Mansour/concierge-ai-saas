@@ -1,0 +1,120 @@
+# Owner: Ali
+import pytest
+
+from app.repositories.embedding_repo import EmbeddingChunk, InMemoryEmbeddingRepository
+from app.repositories.lead_repo import InMemoryLeadRepository
+from app.services.agent_service import AgentService, ToolPlan, ToolRegistry
+from app.services.chat_service import ChatService, ChatValidationError
+from app.services.lead_service import LeadService
+from app.services.memory_service import InMemoryMemoryStore, MemoryService
+from app.services.rag_service import RagService
+from app.services.router_service import RouterService
+
+
+class FixedClassifier:
+    def __init__(self, label, confidence):
+        self.label = label
+        self.confidence = confidence
+
+    def classify(self, message):
+        return self.label, self.confidence
+
+
+class SequencePlanner:
+    def __init__(self, plans):
+        self.plans = plans
+
+    def plan(self, *, request, tool_calls):
+        if len(tool_calls) >= len(self.plans):
+            return ToolPlan(None, "done", final_response="Agent handled it.")
+        return self.plans[len(tool_calls)]
+
+
+def chat_payload(**overrides):
+    payload = {
+        # Mocked Mohammad/Charbel-owned auth input:
+        # the final chat API must derive tenant_id from a verified widget token.
+        "tenant_id": "tenant-a",
+        "conversation_id": "conversation-a",
+        "visitor_session_id": "visitor-a",
+        "message": "What does the team plan cost?",
+        # Mocked Charbel-owned widget input.
+        "source_url": "https://tenant-a.example/pricing",
+        "trace_id": "trace-a",
+    }
+    payload.update(overrides)
+    return payload
+
+
+def rag_service():
+    return RagService(
+        InMemoryEmbeddingRepository(
+            [
+                EmbeddingChunk(
+                    chunk_id="a-pricing",
+                    tenant_id="tenant-a",
+                    cms_content_id="cms-a-pricing",
+                    title="Pricing",
+                    text="Team pricing starts at 49 dollars per month.",
+                )
+            ]
+        )
+    )
+
+
+def memory_service():
+    return MemoryService(InMemoryMemoryStore())
+
+
+def test_chat_routes_faq_to_rag_and_stores_memory():
+    memory = memory_service()
+    service = ChatService(
+        memory_service=memory,
+        router_service=RouterService(
+            classifier=FixedClassifier("faq", 0.92),
+            rag_tool=rag_service(),
+        ),
+    )
+
+    response = service.handle_message(chat_payload())
+
+    assert response.decision == "rag"
+    assert response.message == "Team pricing starts at 49 dollars per month."
+    assert [
+        message.role
+        for message in memory.get_messages(
+            tenant_id="tenant-a",
+            conversation_id="conversation-a",
+        )
+    ] == ["user", "assistant"]
+
+
+def test_chat_uses_agent_when_router_hands_off():
+    memory = memory_service()
+    agent = AgentService(
+        tool_registry=ToolRegistry(
+            rag_tool=rag_service(),
+            lead_tool=LeadService(repository=InMemoryLeadRepository()),
+        ),
+        planner=SequencePlanner([ToolPlan("rag_search", "need tenant knowledge")]),
+    )
+    service = ChatService(
+        memory_service=memory,
+        router_service=RouterService(classifier=FixedClassifier("unknown", 0.2)),
+        agent_service=agent,
+    )
+
+    response = service.handle_message(chat_payload(message="Pricing and follow up please"))
+
+    assert response.decision == "agent"
+    assert response.message == "Agent handled it."
+
+
+def test_chat_rejects_unknown_fields():
+    service = ChatService(
+        memory_service=memory_service(),
+        router_service=RouterService(classifier=FixedClassifier("spam", 0.95)),
+    )
+
+    with pytest.raises(ChatValidationError):
+        service.handle_message(chat_payload(tenant_override="tenant-b"))

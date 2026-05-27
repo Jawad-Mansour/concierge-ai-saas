@@ -1,7 +1,12 @@
 # Owner: Ali
 import pytest
 
+from app.repositories.cms_repo import InMemoryCmsRepository
 from app.repositories.embedding_repo import EmbeddingChunk, InMemoryEmbeddingRepository
+from app.services.embedding_service import (
+    EmbeddingService,
+    IngestionValidationError,
+)
 from app.services.rag_service import (
     CrossTenantRetrievalError,
     RagService,
@@ -129,3 +134,90 @@ def test_rag_detects_repository_cross_tenant_leak():
 
     with pytest.raises(CrossTenantRetrievalError):
         service.search(rag_payload())
+
+
+def test_ingest_cms_content_creates_tenant_scoped_chunks_searchable_by_rag():
+    cms_repo = InMemoryCmsRepository()
+    embedding_repo = InMemoryEmbeddingRepository()
+    ingestion = EmbeddingService(
+        cms_repository=cms_repo,
+        embedding_repository=embedding_repo,
+        chunk_size_words=8,
+        chunk_overlap_words=2,
+    )
+
+    result = ingestion.ingest_content(
+        {
+            "tenant_id": "tenant-a",
+            "content_id": "cms-a-hours",
+            "title": "Hours",
+            "body": "Our shop is open Monday through Friday from nine to five.",
+            "url": "https://tenant-a.example/hours",
+            "content_type": "page",
+            "published": True,
+        }
+    )
+    rag_result = RagService(embedding_repo).search(
+        rag_payload(query="When is the shop open?", top_k=2)
+    )
+
+    assert result.tenant_id == "tenant-a"
+    assert result.content_id == "cms-a-hours"
+    assert result.chunk_count >= 1
+    assert rag_result.status == "ok"
+    assert rag_result.citations[0].cms_content_id == "cms-a-hours"
+
+
+def test_ingest_cms_content_rejects_unknown_or_empty_fields():
+    ingestion = EmbeddingService(cms_repository=InMemoryCmsRepository())
+
+    with pytest.raises(IngestionValidationError):
+        ingestion.ingest_content(
+            {
+                "tenant_id": "tenant-a",
+                "content_id": "cms-a",
+                "title": " ",
+                "body": "Some body",
+            }
+        )
+
+    with pytest.raises(IngestionValidationError):
+        ingestion.ingest_content(
+            {
+                "tenant_id": "tenant-a",
+                "content_id": "cms-a",
+                "title": "Title",
+                "body": "Some body",
+                "tenant_override": "tenant-b",
+            }
+        )
+
+
+def test_ingest_cms_repository_lists_only_same_tenant_chunks():
+    cms_repo = InMemoryCmsRepository()
+    ingestion = EmbeddingService(
+        cms_repository=cms_repo,
+        chunk_size_words=6,
+        chunk_overlap_words=1,
+    )
+
+    ingestion.ingest_content(
+        {
+            "tenant_id": "tenant-a",
+            "content_id": "cms-a",
+            "title": "Tenant A",
+            "body": "Tenant A has public pricing information.",
+        }
+    )
+    ingestion.ingest_content(
+        {
+            "tenant_id": "tenant-b",
+            "content_id": "cms-b",
+            "title": "Tenant B",
+            "body": "Tenant B has private support information.",
+        }
+    )
+
+    assert {chunk.tenant_id for chunk in cms_repo.list_chunks(tenant_id="tenant-a")} == {
+        "tenant-a"
+    }
