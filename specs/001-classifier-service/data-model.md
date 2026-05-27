@@ -34,7 +34,7 @@ Returned to the backend. Always HTTP 200 unless the request failed authenticatio
 ### `IntentClass`
 
 ```
-Literal["SPAM", "FAQ", "CONTACT_LEAD", "HARD_QUESTION", "UNKNOWN"]
+Literal["SPAM", "FAQ", "ACCOUNT_OPS", "HARD_QUESTION", "UNKNOWN"]
 ```
 
 The five-class vocabulary is closed. Adding or removing a class is a model-version change handled through the same evaluation-gated rollout path as any other model update (spec Assumptions, "The five intent classes are stable for the lifetime of the deployed model"). The `Literal` type ensures any new class appears as a typed code diff with a corresponding artifact change.
@@ -43,7 +43,7 @@ The five-class vocabulary is closed. Adding or removing a class is a model-versi
 |-------|---------------|-------|
 | `SPAM` | drop silently | Junk to be dropped without a response. |
 | `FAQ` | answer from CMS without LLM | The CMS lookup is the backend's job; the classifier just labels the message as "the kind of thing CMS can answer". |
-| `CONTACT_LEAD` | capture lead | Visitor signaling interest or sharing contact details. |
+| `ACCOUNT_OPS` | capture lead | Visitor signaling interest or sharing contact details. |
 | `HARD_QUESTION` | escalate to LLM agent | Ambiguous, multi-part, or requires reasoning across sources. |
 | `UNKNOWN` | escalate to LLM agent (fallback) | The explicit "don't guess" answer. Two sub-cases distinguished by `confidence` (below). |
 
@@ -112,7 +112,7 @@ The contents of `modelserver/artifacts/model_card.md`. Not a wire entity; it is 
 | `sha256` | string (64 hex chars) | yes | Full SHA-256 of the artifact file. |
 | `training_data_revision` | string | yes | Commit SHA (or content-addressed identifier) of the dataset used to train. |
 | `training_script_revision` | string | yes | Commit SHA of the training notebook + export script. |
-| `intended_task` | string | yes | Fixed: "5-class intent classification (SPAM/FAQ/CONTACT_LEAD/HARD_QUESTION/UNKNOWN)". |
+| `intended_task` | string | yes | Fixed: "5-class intent classification (SPAM/FAQ/ACCOUNT_OPS/HARD_QUESTION/UNKNOWN)". |
 | `unknown_threshold` | float | yes | The UNKNOWN-escalation threshold (research.md Decision 3). |
 | `hosted_model_identifier` | string \| null | conditional | Required iff `artifact_type=="hosted_llm_prompt"` — the pinned hosted-model identifier (e.g., `claude-sonnet-4-6`). |
 | `notes` | string | no | Free text for operator context. |

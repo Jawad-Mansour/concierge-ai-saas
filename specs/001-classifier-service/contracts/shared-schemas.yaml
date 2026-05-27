@@ -33,7 +33,7 @@ components:
 
     IntentClass:
       type: string
-      enum: [SPAM, FAQ, CONTACT_LEAD, HARD_QUESTION, UNKNOWN]
+      enum: [SPAM, FAQ, ACCOUNT_OPS, HARD_QUESTION, UNKNOWN]
       description: |
         Closed five-class vocabulary. Adding a class is a model-version change
         handled through the same evaluation-gated rollout path as any other

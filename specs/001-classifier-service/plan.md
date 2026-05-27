@@ -6,7 +6,7 @@
 
 ## Summary
 
-The classifier service is a lean FastAPI process that exposes one endpoint — `POST /predict` — returning one of five intent classes (`SPAM`, `FAQ`, `CONTACT_LEAD`, `HARD_QUESTION`, `UNKNOWN`) plus a `confidence` in [0, 1]. The backend's router calls it on every visitor message and uses the prediction to keep the bulk of traffic off the LLM agent path. Vault-issued service credential is required on every request. Per-call OpenTelemetry span carries `tenant_id`, `predicted_class`, `confidence`, `latency_ms`, and the SHA-256 of the loaded model artifact. p95 latency under 50 ms for short messages.
+The classifier service is a lean FastAPI process that exposes one endpoint — `POST /predict` — returning one of five intent classes (`SPAM`, `FAQ`, `ACCOUNT_OPS`, `HARD_QUESTION`, `UNKNOWN`) plus a `confidence` in [0, 1]. The backend's router calls it on every visitor message and uses the prediction to keep the bulk of traffic off the LLM agent path. Vault-issued service credential is required on every request. Per-call OpenTelemetry span carries `tenant_id`, `predicted_class`, `confidence`, `latency_ms`, and the SHA-256 of the loaded model artifact. p95 latency under 50 ms for short messages.
 
 The shipped model is selected from three candidates trained offline in Colab and benched on a common held-out set: (a) a **classical sklearn baseline** (TF-IDF + LogReg or GradientBoosting), (b) a **small deep model exported to ONNX**, and (c) an **LLM zero-shot baseline** via a hosted API with a frozen prompt. The choice is committed to `deliverables/DECISIONS.md` with the four-metric comparison required by Principle III (accuracy, p95 latency, artifact size, per-1k-request cost). The shipped artifact is a single file — `modelserver/artifacts/classifier.onnx` (for the deep candidate) or `modelserver/artifacts/classifier.joblib` (for the classical candidate) — pinned by SHA-256 in `modelserver/artifacts/model_card.md`. At boot, the service computes the artifact's SHA-256 and refuses to start if it does not match the model card. A held-out macro-F1 evaluation runs in CI on every PR touching `modelserver/` or `artifacts/` and blocks merges below the recorded threshold.
 
@@ -183,13 +183,22 @@ modelserver/
 │   └── model_card.md                   # SHA-256, training data revision, training script revision, intended task
 │
 └── training/                           # NOT copied into the serving image (Principle I)
+    ├── prepare_data.ipynb              # Cleaning + split notebook; produces data/cleaned/ and data/cleaning_metadata.json
     ├── train_ml.ipynb                  # Classical baseline (sklearn + TF-IDF)
     ├── train_dl.ipynb                  # Small deep model (training only; ONNX export below)
     ├── export_onnx.py                  # PyTorch/Keras → ONNX export, with sanity-check vs. training-time outputs
     ├── evaluate_models.py              # Runs all three candidates against held-out set → DECISIONS table
-    └── datasets/
-        ├── train.jsonl                 # Training data — reference only; serving image doesn't include it
-        └── README.md                   # Labeling guide, class definitions, dataset revision history
+    └── data/
+        ├── data_card.md                # Dataset name, revision, label set, split strategy, known biases
+        ├── cleaning_metadata.json      # Per-split row counts, drop reasons, label distribution — from prepare_data.ipynb
+        ├── raw_merged.csv              # Source CSV — reference only; never copied into serving image
+        └── cleaned/
+            ├── clean_raw_train.csv
+            ├── clean_raw_val.csv
+            ├── clean_raw_test.csv
+            ├── clean_strict_train.csv
+            ├── clean_strict_val.csv
+            └── clean_strict_test.csv
 
 backend/
 └── app/
@@ -203,7 +212,7 @@ evals/
     ├── eval_classifier.py              # (Jana-owned) macro-F1 against held-out set; called by evals.yml CI gate
     ├── latency_probe.py                # NEW (this feature) — p95 measurement script for DECISIONS.md row
     └── datasets/
-        └── test.jsonl                  # Held-out set; the macro-F1 gate runs against this
+        └── test.jsonl                  # Held-out set; the macro-F1 gate runs against this (training splits live in modelserver/training/data/)
 
 .github/
 └── workflows/

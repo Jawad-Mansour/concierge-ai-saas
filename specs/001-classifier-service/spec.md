@@ -6,7 +6,7 @@
 
 **Status**: Draft
 
-**Input**: User description: "Specify the classifier service for the Concierge project. The classifier is the routing brain of the chat pipeline. It receives every incoming visitor message and predicts one of five intent classes — SPAM, FAQ, CONTACT_LEAD, HARD_QUESTION, UNKNOWN — so the backend's router can drop spam, answer from CMS, capture a lead, escalate to the agent, or fall back. One HTTP endpoint (POST /predict) called by the backend's classifier client, authenticated by a Vault-issued service credential, with p95 latency under 50ms. The shipped model is one of three trained offline in Colab (classical sklearn, small ONNX deep model, or LLM zero-shot) and pinned by SHA-256 in a model card. Tenant-agnostic by design, observable via OTel spans, gated in CI by a macro-F1 evaluation against a held-out set."
+**Input**: User description: "Specify the classifier service for the Concierge project. The classifier is the routing brain of the chat pipeline. It receives every incoming visitor message and predicts one of five intent classes — SPAM, FAQ, ACCOUNT_OPS, HARD_QUESTION, UNKNOWN — so the backend's router can drop spam, answer from CMS, capture a lead, escalate to the agent, or fall back. One HTTP endpoint (POST /predict) called by the backend's classifier client, authenticated by a Vault-issued service credential, with p95 latency under 50ms. The shipped model is one of three trained offline in Colab (classical sklearn, small ONNX deep model, or LLM zero-shot) and pinned by SHA-256 in a model card. Tenant-agnostic by design, observable via OTel spans, gated in CI by a macro-F1 evaluation against a held-out set."
 
 ## User Scenarios & Testing *(mandatory)*
 

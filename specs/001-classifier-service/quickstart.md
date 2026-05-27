@@ -86,7 +86,7 @@ Confirm `model_hash` matches the 12-character truncation of the full SHA-256 in 
 curl -sX POST http://localhost:8001/predict -H "Authorization: Bearer $SVC_CRED" -H "Content-Type: application/json" \
   -d '{"tenant_id":"tenant-acme","message":"BUY CHEAP MEDS NOW!!! click http://spammy.example"}' | jq
 
-# CONTACT_LEAD
+# ACCOUNT_OPS
 curl -sX POST http://localhost:8001/predict -H "Authorization: Bearer $SVC_CRED" -H "Content-Type: application/json" \
   -d '{"tenant_id":"tenant-acme","message":"Im interested in pricing — can you call me at +1-555-0123?"}' | jq
 

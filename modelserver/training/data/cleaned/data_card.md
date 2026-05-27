@@ -151,15 +151,15 @@ All paths relative to `modelserver/data/cleaned/`.
 
 | File | Rows | SHA-256 |
 |---|---|---|
-| `clean_raw_train.csv` | 2,408 | `<PASTE FROM NOTEBOOK OUTPUT>` |
-| `clean_raw_val.csv` | 512 | `<PASTE>` |
-| `clean_raw_test.csv` | 513 | `<PASTE>` |
-| `clean_strict_train.csv` | 2,408 | `<PASTE>` |
-| `clean_strict_val.csv` | 512 | `<PASTE>` |
-| `clean_strict_test.csv` | 513 | `<PASTE>` |
-| `cleaning_metadata.json` | — | `<PASTE>` |
+| `clean_raw_train.csv` | 2,408 | `9c0526f42448453ce5c52e91d3f889114d713ca0ff9e26871b50f86954628460` |
+| `clean_raw_val.csv` | 512 | `033b8fd1436a6c6c5d5fe2ac0c6046850c3ee25b9ae46c523b830ad883087410` |
+| `clean_raw_test.csv` | 513 | `d69fb075f4f6e264ad701c17773d946481e0c4f0c4390e7121008a48430e10b2` |
+| `clean_strict_train.csv` | 2,408 | `fcb2c86d4bd897d88a653432085baf22914db44973152be0c18c709b213cffcc` |
+| `clean_strict_val.csv` | 512 | `4678aed0ec6354e268d0819be828773cdcd583d69068b01f8fe0df7f8602a991` |
+| `clean_strict_test.csv` | 513 | `9404439fb59a5fbc700a72d8981d8e95bd06a5620fe4ff7e98d7635f21f9d283` |
+| `cleaning_metadata.json` | — | `21ab59f6cab1a33669469a2fc10367a4d48d668b1fc3c1eaf983ec7039a18b27` |
 
-**Source merged file:** `<PASTE FILENAME>`, SHA-256 `<PASTE FROM PART 2a OUTPUT>`.
+**Source merged file:** `raw_merged.csv`, SHA-256 `4fb092710fa9f22a230ed30233624ccb65abf48ff8c27c0507ee64e2ec4d431c`.
 
 ---
 
