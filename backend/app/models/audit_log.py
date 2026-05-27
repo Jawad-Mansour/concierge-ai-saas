@@ -32,7 +32,7 @@ class AuditLogEntry(Base):
         nullable=False,
         default=lambda: datetime.now(timezone.utc),
     )
-    metadata: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
+    log_metadata: Mapped[dict[str, Any] | None] = mapped_column("metadata", JSONB, nullable=True)
 
     __table_args__ = (
         Index("idx_audit_log_actor_id", "actor_id"),
