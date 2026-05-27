@@ -22,7 +22,6 @@ class TestHealthEndpoints:
         data = _get("http://localhost:8000/health")
         assert data["status"] == "ok"
         assert data["service"] == "backend"
-        assert "stub" in data  # present during dev, removed by owner
 
     def test_modelserver_health(self):
         """Modelserver /health returns 200 with correct shape."""
