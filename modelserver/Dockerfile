@@ -31,6 +31,9 @@ ENV PYTHONPATH=/app
 
 WORKDIR /app
 COPY app/ ./app/
+COPY artifacts/ ./artifacts/
+# Principle I: training/ is intentionally NOT copied into the serving image.
+# Image total transitive size must stay < 500 MB — enforced by the CI image-size job.
 
 EXPOSE 8001
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8001", "--reload"]
