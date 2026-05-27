@@ -35,6 +35,7 @@ exclude = [
 
 [tool.pytest.ini_options]
 addopts = "-m 'not integration'"
+pythonpath = ["."]
 markers = [
     "integration: marks tests as requiring the live docker compose stack",
 ]
