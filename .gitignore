@@ -74,6 +74,7 @@ logs/
 # Claude Code local state (personal — not committed)
 .claude/
 CLAUDE.md
+.specify/
 
 # Personal planning workspace (SpecKit — not committed)
 001-tenant-model-rls-provisioning/

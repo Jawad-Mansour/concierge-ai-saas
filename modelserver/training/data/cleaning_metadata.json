@@ -1,0 +1,91 @@
+{
+  "source_file": "concierge_combined_public_router_dataset (1).csv",
+  "source_sha256": "4fb092710fa9f22a230ed30233624ccb65abf48ff8c27c0507ee64e2ec4d431c",
+  "label_mapping": {
+    "spam": "SPAM",
+    "faq": "FAQ",
+    "ambiguous": "UNKNOWN",
+    "human_request": "HARD_QUESTION",
+    "sales_or_contact": "ACCOUNT_OPS"
+  },
+  "cleaning_pipeline": {
+    "raw": [
+      "strip_placeholders",
+      "fix_mojibake",
+      "strip_control_chars",
+      "normalize_whitespace"
+    ],
+    "strict": [
+      "strip_placeholders",
+      "fix_mojibake",
+      "strip_control_chars",
+      "normalize_whitespace",
+      "strip_urls",
+      "strip_digits",
+      "strip_special_chars",
+      "lowercase",
+      "normalize_whitespace"
+    ]
+  },
+  "split": {
+    "train_pct": 70,
+    "val_pct": 15,
+    "test_pct": 15,
+    "stratified_by": "label",
+    "seed": 42
+  },
+  "leakage_dropped": {
+    "val": 5,
+    "test": 4
+  },
+  "files": [
+    {
+      "file": "clean_raw_train.csv",
+      "version": "raw",
+      "split": "train",
+      "rows": 2408,
+      "size_bytes": 330916,
+      "sha256": "9c0526f42448453ce5c52e91d3f889114d713ca0ff9e26871b50f86954628460"
+    },
+    {
+      "file": "clean_raw_val.csv",
+      "version": "raw",
+      "split": "val",
+      "rows": 512,
+      "size_bytes": 69748,
+      "sha256": "033b8fd1436a6c6c5d5fe2ac0c6046850c3ee25b9ae46c523b830ad883087410"
+    },
+    {
+      "file": "clean_raw_test.csv",
+      "version": "raw",
+      "split": "test",
+      "rows": 513,
+      "size_bytes": 69811,
+      "sha256": "d69fb075f4f6e264ad701c17773d946481e0c4f0c4390e7121008a48430e10b2"
+    },
+    {
+      "file": "clean_strict_train.csv",
+      "version": "strict",
+      "split": "train",
+      "rows": 2408,
+      "size_bytes": 320708,
+      "sha256": "fcb2c86d4bd897d88a653432085baf22914db44973152be0c18c709b213cffcc"
+    },
+    {
+      "file": "clean_strict_val.csv",
+      "version": "strict",
+      "split": "val",
+      "rows": 512,
+      "size_bytes": 67757,
+      "sha256": "4678aed0ec6354e268d0819be828773cdcd583d69068b01f8fe0df7f8602a991"
+    },
+    {
+      "file": "clean_strict_test.csv",
+      "version": "strict",
+      "split": "test",
+      "rows": 513,
+      "size_bytes": 67702,
+      "sha256": "9404439fb59a5fbc700a72d8981d8e95bd06a5620fe4ff7e98d7635f21f9d283"
+    }
+  ]
+}
