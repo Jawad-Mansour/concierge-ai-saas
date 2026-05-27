@@ -7,18 +7,22 @@ FROM python:3.12-slim AS deps
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential g++ && rm -rf /var/lib/apt/lists/*
 
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+# Install uv via pip — avoids ghcr.io which is blocked on some networks
+RUN pip install uv==0.5.4 --no-cache-dir
 
-ENV VIRTUAL_ENV=/opt/venv
+ENV VIRTUAL_ENV=/opt/venv \
+    UV_PROJECT_ENVIRONMENT=/opt/venv \
+    UV_LINK_MODE=copy \
+    UV_COMPILE_BYTECODE=1 \
+    UV_PYTHON_DOWNLOADS=never \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
 RUN uv venv $VIRTUAL_ENV
 
 WORKDIR /app
-COPY pyproject.toml ./
-# NOTE: nemoguardrails may pull torch/transformers transitively.
-# If the image exceeds expected size, Jana should audit with:
-#   docker run --rm <image> pip show torch
-RUN uv pip install --python $VIRTUAL_ENV/bin/python --no-cache \
-    fastapi "uvicorn[standard]" hvac nemoguardrails
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --no-dev --python $VIRTUAL_ENV/bin/python
 
 # ── runtime ──────────────────────────────────────────────────
 FROM python:3.12-slim

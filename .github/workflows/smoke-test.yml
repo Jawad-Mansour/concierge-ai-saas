@@ -85,6 +85,13 @@ jobs:
           curl -sf http://localhost:8001/health
           curl -sf http://localhost:8002/health
 
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Run integration smoke tests
+        run: uv run pytest tests/test_ci_smoke.py -v --tb=short -m integration
+        working-directory: backend
+
       - name: Tear down
         if: always()
         run: docker compose down -v

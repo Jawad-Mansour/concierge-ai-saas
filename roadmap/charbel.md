@@ -40,6 +40,28 @@ PR link or commit SHA in the trailing parenthesis.
       shows byte-identical signing keys
 - [ ] Confirm `POSTGRES_PORT` override works for teammates with local Postgres
 
+## Phase 2.1 — Unblock Mohammad (PR #14)
+
+- [x] Fix backend/Dockerfile deps stage to read from pyproject.toml
+      instead of hardcoded package names
+- [x] Add pytest job to ci.yml (continue-on-error until real tests land)
+- [x] Add widget_configs migration (001_widget_configs.sql) with
+      widget_id UUID UNIQUE — required by POST /auth/widget-token
+- [x] Replaced ghcr.io/astral-sh/uv copy with pip install uv==0.5.4
+      in all Python Dockerfiles — removes ghcr.io network dependency.
+      Adopted uv sync --frozen with lockfiles (Week 7 pattern).
+- [x] Wrote real integration smoke tests (test_ci_smoke.py) —
+      health endpoints for all 4 Python services + widget nginx
+      healthz + blocked-host. Marked with pytestmark integration.
+- [x] Wrote widget auth contract stubs (test_widget_auth.py) —
+      6 skip-marked tests defining Phase 5 contract.
+- [x] Removed continue-on-error from CI test job — skip stubs
+      are SKIPPED not FAILED so CI stays green.
+- [x] Added integration test step to smoke-test.yml — runs
+      test_ci_smoke.py against the live stack.
+- [x] Registered integration pytest mark in pyproject.toml to silence
+      PytestUnknownMarkWarning
+
 ## Phase 3 — CI pipeline skeleton
 
 Goal: pipeline green before there's anything real to gate. Owners
@@ -131,3 +153,14 @@ gets rejected. CORS is defense-in-depth, not the boundary.
   excludes for widget/src, demo/, node_modules.
 - Known: branch ruleset status check names need human verification
   on GitHub after this PR merges.
+
+### Wed 2026-05-27
+
+- Unblocked Mohammad's PR #14: fixed backend/Dockerfile to install
+  deps from pyproject.toml dynamically (hardcoded list broke when
+  owners added real deps), added pytest job to ci.yml, added
+  widget_configs migration with RLS and widget_id UNIQUE constraint.
+- Wrote real integration smoke tests and widget auth contract stubs.
+  Removed continue-on-error from CI. Integration tests now run in
+  smoke-test workflow against the live stack.
+- Registered integration mark in pyproject.toml.

@@ -18,7 +18,10 @@ dependencies = [
 ]
 
 [dependency-groups]
-dev = ["ruff>=0.4"]
+dev = [
+    "pytest>=9.0.3",
+    "ruff>=0.4",
+]
 
 [tool.ruff]
 exclude = [
@@ -27,4 +30,10 @@ exclude = [
     "demo",
     "admin",
     ".github",
+]
+
+[tool.pytest.ini_options]
+addopts = "-m 'not integration'"
+markers = [
+    "integration: marks tests as requiring the live docker compose stack",
 ]
