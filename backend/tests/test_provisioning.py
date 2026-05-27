@@ -22,6 +22,7 @@ from app.services.auth_service import (
 )
 from app.models.user import Role
 
+pytestmark = pytest.mark.integration
 
 # ── Provisioning ─────────────────────────────────────────────────────────────
 

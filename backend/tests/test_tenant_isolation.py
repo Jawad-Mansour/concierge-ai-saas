@@ -9,6 +9,7 @@ Run with:
     docker compose run --rm backend python -m pytest backend/tests/test_tenant_isolation.py -v
 """
 
+import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -39,6 +40,7 @@ def test_tenant_admin_cannot_call_tenant_manager_endpoint():
     )
 
 
+@pytest.mark.integration
 def test_tenant_manager_cannot_read_tenant_content():
     """Tenant Manager role gate passes on /tenants but RLS blocks all content reads.
 
