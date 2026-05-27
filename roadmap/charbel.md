@@ -61,6 +61,22 @@ PR link or commit SHA in the trailing parenthesis.
       test_ci_smoke.py against the live stack.
 - [x] Registered integration pytest mark in pyproject.toml to silence
       PytestUnknownMarkWarning
+- [x] Converted 001_widget_configs.sql → proper Alembic migration
+      002_widget_configs_columns.py (ALTER TABLE, not CREATE TABLE —
+      Mohammad already created the stub in 001_baseline)
+- [x] Fixed backend/Dockerfile — added COPY alembic.ini and
+      COPY alembic/ to runtime stage so alembic upgrade head
+      works inside the container
+- [x] Fixed docker-compose.yml — added explicit
+      VAULT_ADDR: http://vault:8200 override to backend,
+      modelserver, guardrails, admin services. Root cause:
+      .env has localhost:8200 for host CLI access which was
+      bleeding into containers via the vault-env anchor.
+- [x] Rebuilt postgres image after Mohammad filled init.sql —
+      widget_configs stub now created correctly on fresh volume.
+      Verified: \d widget_configs shows id, tenant_id, created_at
+      with RLS policies active.
+- [x] Full stack validated: 12/12 services healthy after all fixes.
 
 ## Phase 3 — CI pipeline skeleton
 
@@ -169,3 +185,13 @@ gets rejected. CORS is defense-in-depth, not the boundary.
   restart produces byte-identical keys. ANTHROPIC_API_KEY comment
   clarified in .env.example — real key from Charbel, forwarded
   to Vault by vault-init, never read from .env directly by services.
+
+### Thu 2026-05-28
+
+- Fixed widget_configs migration — deleted conflicting raw SQL,
+  replaced with Alembic 002 that ALTER TABLEs the stub Mohammad
+  created.
+- Fixed VAULT_ADDR bleeding from .env into containers (localhost
+  vs vault:8200). Added alembic.ini + alembic/ to backend Dockerfile.
+  Rebuilt postgres image — widget_configs stub confirmed in fresh DB.
+  Full stack 12/12 healthy.
