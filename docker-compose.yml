@@ -128,6 +128,7 @@ services:
         condition: service_healthy
     environment:
       <<: *vault-env
+      VAULT_ADDR: http://vault:8200
       DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/concierge}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
     ports:
@@ -148,6 +149,7 @@ services:
         condition: service_completed_successfully
     environment:
       <<: *vault-env
+      VAULT_ADDR: http://vault:8200
     ports:
       - "${MODELSERVER_PORT:-8001}:8001"
     volumes:
@@ -166,6 +168,7 @@ services:
         condition: service_completed_successfully
     environment:
       <<: *vault-env
+      VAULT_ADDR: http://vault:8200
     ports:
       - "${GUARDRAILS_PORT:-8002}:8002"
     volumes:
@@ -184,6 +187,7 @@ services:
         condition: service_completed_successfully
     environment:
       <<: *vault-env
+      VAULT_ADDR: http://vault:8200
     ports:
       - "${ADMIN_PORT:-8501}:8501"
     volumes:
