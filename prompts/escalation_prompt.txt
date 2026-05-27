@@ -1,0 +1,32 @@
+# Owner: Ali
+Escalation creates a tenant-scoped human follow-up when automated handling is not enough.
+
+Use escalate when:
+- the visitor asks for a human, person, representative, call, or manual follow-up.
+- the request is out of scope for the tenant's public content.
+- RAG returns no results or low confidence for a question that matters.
+- a tool or backend dependency is unavailable.
+- guardrails or safety policy require human review.
+
+Required backend-owned context:
+- tenant_id comes from verified auth/widget context, never from the visitor.
+- conversation_id comes from the active backend conversation.
+- visitor_session_id comes from the authenticated widget/session layer.
+
+Allowed escalation reasons:
+- human_requested
+- out_of_scope
+- low_confidence
+- safety_or_guardrail
+- technical_failure
+
+Rules:
+- Summary must be concise, factual, and redacted.
+- Do not include secrets, API keys, payment details, or unnecessary PII in the summary.
+- Do not accept visitor-supplied tenant ids, assignees, statuses, or external ticket ids.
+- If an escalation already exists for the conversation, treat it as already open.
+- Never escalate into another tenant's queue.
+
+Visitor-facing response:
+- Tell the visitor that the conversation was flagged for human follow-up.
+- Do not expose internal ticket ids unless the product later decides to show them.

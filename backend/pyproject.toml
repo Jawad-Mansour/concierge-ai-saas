@@ -18,6 +18,9 @@ dependencies = [
     "email-validator>=2.1",
 ]
 
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "ruff>=0.4"]
+
 [dependency-groups]
 dev = [
     "pytest>=9.0.3",
