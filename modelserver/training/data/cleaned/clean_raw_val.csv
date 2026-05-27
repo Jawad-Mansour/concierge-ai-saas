@@ -1,0 +1,513 @@
+row_id,text,label,source,original_label
+1544,wanna correct the personal information,FAQ,Bitext Customer Support Intent Dataset,category=ACCOUNT; intent=edit_account
+619,who is the scariest character in start trek,UNKNOWN,CLINC OOS Dataset (train),oos
+2338,do you have a way to send feedback for a service?,FAQ,Bitext Customer Support Intent Dataset,category=FEEDBACK; intent=review
+2408,want help to restore my pwd,FAQ,Bitext Customer Support Intent Dataset,category=ACCOUNT; intent=recover_password
+541,want help to speak to someone,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+2517,check invoice #12588,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=INVOICE; intent=check_invoice
+3119,"Hack Chat. Get backdoor entry into 121 chat rooms at a fraction of the cost. Reply NEO69 or call 09050280520, to subscribe 25p pm. DPS, Bcm box 8027 Ldn, wc1n3xx",SPAM,UCI SMS Spam Collection,spam
+3009,i dont know what to do tl talk to an agent,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+923,I don't know what I have to do to contact someone,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+3242,"I cannot understand anything you say, contact an agent",HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+105,"You can stop further club tones by replying ""STOP MIX"" See my-tone.com/enjoy. html for terms. Club tones cost GBP4.50/week. MFL, PO Box 1146 MK45 2WT (2/3)",SPAM,UCI SMS Spam Collection,spam
+3411,i cannot edit order,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=ORDER; intent=change_order
+3432,I have got to create a platinum account,FAQ,Bitext Customer Support Intent Dataset,category=ACCOUNT; intent=create_account
+2886,"I need to see the cancellation fees , how to do it?",FAQ,Bitext Customer Support Intent Dataset,category=CANCEL; intent=check_cancellation_fee
+2023,can you help me demanding a compensation of money?,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=REFUND; intent=get_refund
+3353,I don't know how to check the goddamn shipment methods,FAQ,Bitext Customer Support Intent Dataset,category=DELIVERY; intent=delivery_options
+2399,Do you want 750 anytime any network mins 150 text and a NEW video phone for only five pounds per week call 08000776320 now or reply for delivery Tomorrow,SPAM,UCI SMS Spam Collection,spam
+2797,"I can't find the early termination penalties, help me",FAQ,Bitext Customer Support Intent Dataset,category=CANCEL; intent=check_cancellation_fee
+381,how do I contact an operator?,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+1847,add item to purchase,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=ORDER; intent=change_order
+2163,"I would like to talk with customer support, how do I do it?",HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_customer_service
+2124,"TheMob>Hit the link to get a premium Pink Panther game, the new no. 1 from Sugababes, a crazy Zebra animation or a badass Hoody wallpaper-all 4 FREE!",SPAM,UCI SMS Spam Collection,spam
+434,Please CALL 08712402902 immediately as there is an urgent message waiting for you.,SPAM,UCI SMS Spam Collection,spam
+2467,find me a book on motivational speaking from amazon,UNKNOWN,CLINC OOS Dataset (test),oos
+736,where are the oscar's held,UNKNOWN,CLINC OOS Dataset (train),oos
+257,how many flavors of mnm's are there,UNKNOWN,CLINC OOS Dataset (test),oos
+1304,how the bus moves,UNKNOWN,CLINC OOS Dataset (test),oos
+1443,how many homeless people are there,UNKNOWN,CLINC OOS Dataset (test),oos
+3339,assistance leaving a bloody opinion about a product,FAQ,Bitext Customer Support Intent Dataset,category=FEEDBACK; intent=review
+2496,can I see how long the shipping takes?,FAQ,Bitext Customer Support Intent Dataset,category=DELIVERY; intent=delivery_period
+2037,assistance to check what delivery options are there,FAQ,Bitext Customer Support Intent Dataset,category=DELIVERY; intent=delivery_options
+3434,help me checking if there are any news on my refund,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=REFUND; intent=track_refund
+1739,"Romantic Paris. 2 nights, 2 flights from £79 Book now 4 next year. Call 08704439680Ts&Cs apply.",SPAM,UCI SMS Spam Collection,spam
+2246,URGENT! We are trying to contact you. Last weekends draw shows that you have won a £900 prize GUARANTEED. Call 09061701939. Claim code S89. Valid 12hrs only,SPAM,UCI SMS Spam Collection,spam
+1515,I need help to inform of errors with online payment,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=PAYMENT; intent=payment_issue
+1168,how to purchase some articles?,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=ORDER; intent=place_order
+707,can I check the available payment options ?,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=PAYMENT; intent=check_payment_methods
+1574,are any earning reports due,UNKNOWN,CLINC OOS Dataset (validation),oos
+3221,tell me at what time customer service available is,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_customer_service
+728,want assistance contacting an operator,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+2897,editing info on pro account,FAQ,Bitext Customer Support Intent Dataset,category=ACCOUNT; intent=edit_account
+2127,show me order status,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=ORDER; intent=track_order
+726,"FreeMsg: Claim ur 250 SMS messages-Text OK to 84025 now!Use web2mobile 2 ur mates etc. Join Txt250.com for 1.50p/wk. T&C BOX139, LA32WU. 16 . Remove txtX or stop",SPAM,UCI SMS Spam Collection,spam
+930,want assistance to edit purchase,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=ORDER; intent=change_order
+1640,where can I resety my user profile pwd?,FAQ,Bitext Customer Support Intent Dataset,category=ACCOUNT; intent=recover_password
+911,Urgent Ur £500 guaranteed award is still unclaimed! Call 09066368327 NOW closingdate04/09/02 claimcode M39M51 £1.50pmmorefrommobile2Bremoved-MobyPOBox734LS27YF,SPAM,UCI SMS Spam Collection,spam
+3079,Kit Strip - you have been billed 150p. Netcollex Ltd. PO Box 1013 IG11 OJA,SPAM,UCI SMS Spam Collection,spam
+374,Get a FREE mobile video player FREE movie. To collect text GO to 89105. Its free! Extra films can be ordered t's and c's apply. 18 yrs only,SPAM,UCI SMS Spam Collection,spam
+1122,when was the gold rush,UNKNOWN,CLINC OOS Dataset (test),oos
+2803,assistance to retrieve my user account pass,FAQ,Bitext Customer Support Intent Dataset,category=ACCOUNT; intent=recover_password
+2507,U have a Secret Admirer who is looking 2 make contact with U-find out who they R*reveal who thinks UR so special-call on 09065171142-stopsms-08718727870150ppm,SPAM,UCI SMS Spam Collection,spam
+3382,how to get the right medicine,UNKNOWN,CLINC OOS Dataset (test),oos
+2237,correcting information on platinum account,FAQ,Bitext Customer Support Intent Dataset,category=ACCOUNT; intent=edit_account
+935,Our records indicate u maybe entitled to 5000 pounds in compensation for the Accident you had. To claim 4 free reply with CLAIM to this msg. 2 stop txt STOP,SPAM,UCI SMS Spam Collection,spam
+3319,what show am i watching,UNKNOWN,CLINC OOS Dataset (train),oos
+1476,I don't know how I could look for invoice #85632,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=INVOICE; intent=check_invoice
+1818,is it possible to enter another shipping address,FAQ,Bitext Customer Support Intent Dataset,category=SHIPPING; intent=set_up_shipping_address
+137,creating gold account,FAQ,Bitext Customer Support Intent Dataset,category=ACCOUNT; intent=create_account
+314,I don't know how I can leave feedback for your company,FAQ,Bitext Customer Support Intent Dataset,category=FEEDBACK; intent=review
+1541,open cacount for wife,FAQ,Bitext Customer Support Intent Dataset,category=ACCOUNT; intent=create_account
+2820,how to check what payment payment modalities are allowed,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=PAYMENT; intent=check_payment_methods
+1178,i expect a rebate of has it been processd already,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=REFUND; intent=track_refund
+115,I don't know what I need to do to earn some bloody products,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=ORDER; intent=place_order
+3196,help to cancel order,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=ORDER; intent=cancel_order
+1687,I do not know what I need to do to talk to a humaqn agent,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+1228,"do a job search on monstercom for jobs in the tech field in arlington, va",UNKNOWN,CLINC OOS Dataset (test),oos
+3333,i want help seeing what hours i can call customer support,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_customer_service
+2460,I don't know what to do to talk with an operator,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+1318,"URGENT! Your Mobile No. was awarded £2000 Bonus Caller Prize on 5/9/03 This is our final try to contact U! Call from Landline 09064019788 BOX42WR29C, 150PPM",SPAM,UCI SMS Spam Collection,spam
+2192,help me to get in touch with bloody customer support,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_customer_service
+950,i don use my pro account help me close it,FAQ,Bitext Customer Support Intent Dataset,category=ACCOUNT; intent=delete_account
+3260,uare not ehlpful i need assistance to speak to a person,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+554,tell me how to get rid of a spirit that's haunting me,UNKNOWN,CLINC OOS Dataset (test),oos
+769,"For your chance to WIN a FREE Bluetooth Headset then simply reply back with ""ADP""",SPAM,UCI SMS Spam Collection,spam
+798,i want assistance to see how soon can i xepect the item,FAQ,Bitext Customer Support Intent Dataset,category=DELIVERY; intent=delivery_period
+2959,Urgent Please call 09066612661 from landline. £5000 cash or a luxury 4* Canary Islands Holiday await collection. T&Cs SAE award. 20M12AQ. 150ppm. 16+ “,SPAM,UCI SMS Spam Collection,spam
+1698,can you tell me the best time to visit downtown when driving,UNKNOWN,CLINC OOS Dataset (test),oos
+701,"New Mobiles from 2004, MUST GO! Txt: NOKIA to No: 89545 & collect yours today! From ONLY £1. www.4-tc.biz 2optout 087187262701.50gbp/mtmsg18 TXTAUCTION.",SPAM,UCI SMS Spam Collection,spam
+2108,I would like to lodge a consumer claim against your business,FAQ,Bitext Customer Support Intent Dataset,category=FEEDBACK; intent=complaint
+1086,is the polar vortex of 2019 apart of global warming,UNKNOWN,CLINC OOS Dataset (test),oos
+791,what do I have to do to check the cancellation charges?,FAQ,Bitext Customer Support Intent Dataset,category=CANCEL; intent=check_cancellation_fee
+3361,where do I see what hours I can call customer service?,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_customer_service
+2067,help me obtain a reimbursement,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=REFUND; intent=get_refund
+1357,find information about a PIN code reset,FAQ,Bitext Customer Support Intent Dataset,category=ACCOUNT; intent=recover_password
+2589,"I have got to talk to a person, how can I do it?",HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+1192,"Congratulations! Thanks to a good friend U have WON the £2,000 Xmas prize. 2 claim is easy, just call 08718726978 NOW! Only 10p per minute. BT-national-rate",SPAM,UCI SMS Spam Collection,spam
+2653,can you tell me how to compute price per ounce,UNKNOWN,CLINC OOS Dataset (validation),oos
+2734,help me to check the early exit charges,FAQ,Bitext Customer Support Intent Dataset,category=CANCEL; intent=check_cancellation_fee
+76,find my invoices from,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=INVOICE; intent=check_invoice
+2611,I do not know what I need to do to download bill #85632,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=INVOICE; intent=get_invoice
+1333,You have 1 new voicemail. Please call 08719181503,SPAM,UCI SMS Spam Collection,spam
+498,do ya deliver to,FAQ,Bitext Customer Support Intent Dataset,category=DELIVERY; intent=delivery_options
+221,transfering to person,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+2334,need to give a quick look at the invoice #85632,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=INVOICE; intent=check_invoice
+1999,"I want to update my delivery address, help me",FAQ,Bitext Customer Support Intent Dataset,category=SHIPPING; intent=change_shipping_address
+1202,need to swap some products of purchase,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=ORDER; intent=change_order
+1630,can I talk to somebody?,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+349,what species of oak tree grows to be the tallest,UNKNOWN,CLINC OOS Dataset (train),oos
+620,I don't know how I can check the ETA of order,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=ORDER; intent=track_order
+2157,I need help to subscribe to your newsletter,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=SUBSCRIPTION; intent=newsletter_subscription
+2659,UR GOING 2 BAHAMAS! CallFREEFONE 08081560665 and speak to a live operator to claim either Bahamas cruise of£2000 CASH 18+only. To opt out txt X to 07786200117,SPAM,UCI SMS Spam Collection,spam
+1726,find a credit counseling service for me on the web,UNKNOWN,CLINC OOS Dataset (test),oos
+444,I am trying to check what shipping options you offer,FAQ,Bitext Customer Support Intent Dataset,category=DELIVERY; intent=delivery_options
+19,want assistance notifying of issues with a registration,FAQ,Bitext Customer Support Intent Dataset,category=ACCOUNT; intent=registration_problems
+3222,I want help to speak with somebody,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+1536,can you help me check your goddamn reimbursement policy?,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=REFUND; intent=check_refund_policy
+71,what do I need to do to speak with an operator?,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+944,what are some deals on amazon,UNKNOWN,CLINC OOS Dataset (train),oos
+907,help me check what hours i can contact customer service,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_customer_service
+570,can you find instructions for removing a coffee stain from upholstery,UNKNOWN,CLINC OOS Dataset (train),oos
+3089,need to talk to customer service will ya helpme,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_customer_service
+43,how old is jennifer aniston,UNKNOWN,CLINC OOS Dataset (test),oos
+1845,I need assistance submitting my secondary delivery address,FAQ,Bitext Customer Support Intent Dataset,category=SHIPPING; intent=set_up_shipping_address
+2920,help me see at what time customer support available is,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_customer_service
+1548,are polar bears on the endangered species list,UNKNOWN,CLINC OOS Dataset (test),oos
+346,go and check the fridge,UNKNOWN,CLINC OOS Dataset (test),oos
+1547,what is the shpiping period?,FAQ,Bitext Customer Support Intent Dataset,category=DELIVERY; intent=delivery_period
+3211,what is the lifespan of a border collie,UNKNOWN,CLINC OOS Dataset (test),oos
+1170,how casn i check at what time i can contact customer support,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_customer_service
+3302,I'm trying to check what hours i can call customer support,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_customer_service
+792,what is the extra digits that are sometimes included on my zip code,UNKNOWN,CLINC OOS Dataset (test),oos
+1952,i need assistance takling with an assistant,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+1001,i do not know what i need to do to restore my pin code,FAQ,Bitext Customer Support Intent Dataset,category=ACCOUNT; intent=recover_password
+893,modifying information on freemium account,FAQ,Bitext Customer Support Intent Dataset,category=ACCOUNT; intent=edit_account
+2930,what do I need to do to subscribe to the newsletter?,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=SUBSCRIPTION; intent=newsletter_subscription
+276,help me to take a quick look at my invoice #12588,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=INVOICE; intent=check_invoice
+2821,neeed assistance setting my secondary shipping address up,FAQ,Bitext Customer Support Intent Dataset,category=SHIPPING; intent=set_up_shipping_address
+100,I want to see the accepted payment methods,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=PAYMENT; intent=check_payment_methods
+2323,need to locate the bill #12588 can uhelp me,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=INVOICE; intent=check_invoice
+742,need help touse the account,FAQ,Bitext Customer Support Intent Dataset,category=ACCOUNT; intent=switch_account
+2153,Ur cash-balance is currently 500 pounds - to maximize ur cash-in now send GO to 86688 only 150p/msg. CC 08718720201 HG/Suite342/2Lands Row/W1J6HL,SPAM,UCI SMS Spam Collection,spam
+2288,I want to check what hours I can contact customer assistance,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_customer_service
+2291,find out what type of wax is needed for a late model ford sedan,UNKNOWN,CLINC OOS Dataset (test),oos
+2992,how many movies are in the star wars series,UNKNOWN,CLINC OOS Dataset (test),oos
+2793,checking refund status,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=REFUND; intent=track_refund
+473,tell me a list of my local papers,UNKNOWN,CLINC OOS Dataset (test),oos
+1226,i have to check the shipment methods i need assistance,FAQ,Bitext Customer Support Intent Dataset,category=DELIVERY; intent=delivery_options
+1183,problems with account deletions,FAQ,Bitext Customer Support Intent Dataset,category=ACCOUNT; intent=delete_account
+3024,I want asisstance to speak with a person,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+244,i dont know what to do to call customer support,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_customer_service
+2975,I have to know if there is anything wrong with the refund,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=REFUND; intent=track_refund
+2646,"all the lastest from Stereophonics, Marley, Dizzee Racal, Libertines and The Strokes! Win Nookii games with Flirt!! Click TheMob WAP Bookmark or text WAP to 82468",SPAM,UCI SMS Spam Collection,spam
+867,"You have won ?1,000 cash or a ?2,000 prize! To claim, call09050000327. T&C: RSTM, SW7 3SS. 150ppm",SPAM,UCI SMS Spam Collection,spam
+3090,I cannot modify order,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=ORDER; intent=change_order
+2883,is it possible to report errors with payments?,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=PAYMENT; intent=payment_issue
+2215,invalid shipping address,FAQ,Bitext Customer Support Intent Dataset,category=SHIPPING; intent=set_up_shipping_address
+296,consumer reclamation against your organization,FAQ,Bitext Customer Support Intent Dataset,category=FEEDBACK; intent=complaint
+3171,I want help speaking to goddamn customer service,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_customer_service
+1039,You'll not rcv any more msgs from the chat svc. For FREE Hardcore services text GO to: 69988 If u get nothing u must Age Verify with yr network & try again,SPAM,UCI SMS Spam Collection,spam
+832,there is an issue setting up the shipping address,FAQ,Bitext Customer Support Intent Dataset,category=SHIPPING; intent=set_up_shipping_address
+1442,i want to find new cyberpunk fiction books,UNKNOWN,CLINC OOS Dataset (test),oos
+1361,I have to see in which cases can I ask to be reimbursed,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=REFUND; intent=check_refund_policy
+3405,I have got to check what hours customer service available is,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_customer_service
+2107,"Urgent! call 09066350750 from your landline. Your complimentary 4* Ibiza Holiday or 10,000 cash await collection SAE T&Cs PO BOX 434 SK3 8WP 150 ppm 18+",SPAM,UCI SMS Spam Collection,spam
+741,what is the nature of the big bang theory,UNKNOWN,CLINC OOS Dataset (test),oos
+2650,check my bill from,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=INVOICE; intent=check_invoice
+1863,who is jane goodall,UNKNOWN,CLINC OOS Dataset (test),oos
+1969,Your weekly Cool-Mob tones are ready to download !This weeks new Tones include: 1) Crazy Frog-AXEL F>>> 2) Akon-Lonely>>> 3) Black Eyed-Dont P >>>More info in n,SPAM,UCI SMS Spam Collection,spam
+2698,How about getting in touch with folks waiting for company? Just txt back your NAME and AGE to opt in! Enjoy the community (150p/SMS),SPAM,UCI SMS Spam Collection,spam
+2749,how to check if there are any news on my rebate?,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=REFUND; intent=track_refund
+899,where to cancel my company newsletter subscription?,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=SUBSCRIPTION; intent=newsletter_subscription
+1910,"Urgent! call 09066612661 from landline. Your complementary 4* Tenerife Holiday or £10,000 cash await collection SAE T&Cs PO Box 3 WA14 2PX 150ppm 18+ Sender: Hol Offer",SPAM,UCI SMS Spam Collection,spam
+1768,I need help seeing what hours I can reach customer support,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_customer_service
+2019,i dont know how to change my address,FAQ,Bitext Customer Support Intent Dataset,category=SHIPPING; intent=change_shipping_address
+2313,can ya help me submit some feedback about ur esrvices,FAQ,Bitext Customer Support Intent Dataset,category=FEEDBACK; intent=review
+3254,assistance to report issues with payment,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=PAYMENT; intent=payment_issue
+3250,ringtoneking 84484,SPAM,UCI SMS Spam Collection,spam
+1454,2p per min to call Germany 08448350055 from your BT line. Just 2p per min. Check PlanetTalkInstant.com for info & T's & C's. Text stop to opt out,SPAM,UCI SMS Spam Collection,spam
+1484,I can't talk with an assistant,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+2757,how many polar bears are still alive in the arctic,UNKNOWN,CLINC OOS Dataset (test),oos
+2699,where can i see art,UNKNOWN,CLINC OOS Dataset (train),oos
+44,set a warning for when my bank account starts running low,UNKNOWN,CLINC OOS Dataset (validation),oos
+1494,can I see in what cases can I ask for reimbursements?,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=REFUND; intent=check_refund_policy
+1264,change information on gold account,FAQ,Bitext Customer Support Intent Dataset,category=ACCOUNT; intent=edit_account
+963,what other countries speak the english language,UNKNOWN,CLINC OOS Dataset (test),oos
+1899,do you know if it is possible to close my savings account,UNKNOWN,CLINC OOS Dataset (test),oos
+2759,help adding an item to purchase,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=ORDER; intent=change_order
+3263,i want information about correcting the address,FAQ,Bitext Customer Support Intent Dataset,category=SHIPPING; intent=change_shipping_address
+3004,talking to agent,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+3121,check to see if i need a pass to use the parking garages downtown,UNKNOWN,CLINC OOS Dataset (test),oos
+1222,help me to talk to a live agent,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+2911,URGENT This is our 2nd attempt to contact U. Your £900 prize from YESTERDAY is still awaiting collection. To claim CALL NOW 09061702893. ACL03530150PM,SPAM,UCI SMS Spam Collection,spam
+3356,who is the start of the movie almost famous,UNKNOWN,CLINC OOS Dataset (test),oos
+2800,I need help ordering several of your item,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=ORDER; intent=place_order
+2341,how many greek mythology characters are there,UNKNOWN,CLINC OOS Dataset (test),oos
+2098,"I cannot remember my account PIN, I haved to reset it",FAQ,Bitext Customer Support Intent Dataset,category=ACCOUNT; intent=recover_password
+1637,FREE entry into our £250 weekly competition just text the word WIN to 80086 NOW. 18 T&C www.txttowin.co.uk,SPAM,UCI SMS Spam Collection,spam
+3410,"I can't open a profile, I have to report a sign-up issue",FAQ,Bitext Customer Support Intent Dataset,category=ACCOUNT; intent=registration_problems
+2548,I have a trouble correcing the address,FAQ,Bitext Customer Support Intent Dataset,category=SHIPPING; intent=change_shipping_address
+2317,"HOT LIVE FANTASIES call now 08707509020 Just 20p per min NTT Ltd, PO Box 1327 Croydon CR9 5WB 0870..k",SPAM,UCI SMS Spam Collection,spam
+3389,WIN a £200 Shopping spree every WEEK Starting NOW. 2 play text STORE to 88039. SkilGme. TsCs08714740323 1Winawk! age16 £1.50perweeksub.,SPAM,UCI SMS Spam Collection,spam
+1518,**FREE MESSAGE**Thanks for using the Auction Subscription Service. 18 . 150p/MSGRCVD 2 Skip an Auction txt OUT. 2 Unsubscribe txt STOP CustomerCare 08718726270,SPAM,UCI SMS Spam Collection,spam
+1421,how do I see how long it takes for the item to arrive?,FAQ,Bitext Customer Support Intent Dataset,category=DELIVERY; intent=delivery_period
+2732,"SMS. ac sun0819 posts HELLO:""You seem cool, wanted to say hi. HI!!!"" Stop? Send STOP to 62468",SPAM,UCI SMS Spam Collection,spam
+231,where can I check the withdrawal charge?,FAQ,Bitext Customer Support Intent Dataset,category=CANCEL; intent=check_cancellation_fee
+3133,i have got to acquire somethingi need assistance,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=ORDER; intent=place_order
+851,i need assistance changing the data on my user profile,FAQ,Bitext Customer Support Intent Dataset,category=ACCOUNT; intent=edit_account
+2762,I have to check what hours I can reach customer support,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_customer_service
+1745,I have problems with the termination of a account,FAQ,Bitext Customer Support Intent Dataset,category=ACCOUNT; intent=delete_account
+3220,help to ask for refunds of money,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=REFUND; intent=get_refund
+219,"I have to locate order , could I get some help?",ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=ORDER; intent=track_order
+2469,can i deposit a check,UNKNOWN,CLINC OOS Dataset (test),oos
+608,search my contacts for the auto repair place,UNKNOWN,CLINC OOS Dataset (test),oos
+3100,can you help me talk with someone?,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+550,2/2 146tf150p,SPAM,UCI SMS Spam Collection,spam
+1410,change color contrast,UNKNOWN,CLINC OOS Dataset (test),oos
+149,can i mix antifreeze with water,UNKNOWN,CLINC OOS Dataset (validation),oos
+2998,i want help modifying the address,FAQ,Bitext Customer Support Intent Dataset,category=SHIPPING; intent=change_shipping_address
+2241,what's the current prevailing interest rate for mortgages in my area,UNKNOWN,CLINC OOS Dataset (test),oos
+921,money!!! you r a lucky winner ! 2 claim your prize text money 2 88600 over £1million to give away ! ppt150x3+normal text rate box403 w1t1jy,SPAM,UCI SMS Spam Collection,spam
+2196,I want help checking when my purchase is going to arrive,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=DELIVERY; intent=delivery_period
+818,I would like to speak with goddamn customer assistance,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_customer_service
+1516,editing gold account,FAQ,Bitext Customer Support Intent Dataset,category=ACCOUNT; intent=edit_account
+3175,"Thanks for your ringtone order, ref number R836. Your mobile will be charged £4.50. Should your tone not arrive please call customer services on 09065069154",SPAM,UCI SMS Spam Collection,spam
+936,Send a logo 2 ur lover - 2 names joined by a heart. Txt LOVE NAME1 NAME2 MOBNO eg LOVE ADAM EVE 07123456789 to 87077 Yahoo! POBox36504W45WQ TxtNO 4 no ads 150p.,SPAM,UCI SMS Spam Collection,spam
+2113,Do you want a New Nokia 3510i colour phone DeliveredTomorrow? With 300 free minutes to any mobile + 100 free texts + Free Camcorder reply or call 08000930705,SPAM,UCI SMS Spam Collection,spam
+1116,wanna use the premium account,FAQ,Bitext Customer Support Intent Dataset,category=ACCOUNT; intent=switch_account
+15,what universities are nearby to me and highly rated,UNKNOWN,CLINC OOS Dataset (test),oos
+1246,can you help me chatting with someone?,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+3349,what are the best personal finance practices,UNKNOWN,CLINC OOS Dataset (test),oos
+3,can you list me tiger wood's stats,UNKNOWN,CLINC OOS Dataset (train),oos
+2357,did the supreme court nominee get approvedu,UNKNOWN,CLINC OOS Dataset (test),oos
+461,I try to talk to a live agent,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+1082,I do not know what to do to modify my shipping address,FAQ,Bitext Customer Support Intent Dataset,category=SHIPPING; intent=change_shipping_address
+2657,I do not know how I can speak to customer support,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_customer_service
+2690,i have to make a claim against ur business,FAQ,Bitext Customer Support Intent Dataset,category=FEEDBACK; intent=complaint
+2542,i do not know how i could obtaain compensations,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=REFUND; intent=get_refund
+2543,can i check what hours i can contact customer service,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_customer_service
+2181,wannma change to the account i need help,FAQ,Bitext Customer Support Intent Dataset,category=ACCOUNT; intent=switch_account
+1815,can you help me check the goddamn status of the rebate?,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=REFUND; intent=track_refund
+600,I want help to check how long reimbursements take,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=REFUND; intent=check_refund_policy
+2240,how does a democracy work,UNKNOWN,CLINC OOS Dataset (validation),oos
+1,create a for-while loop that continues 10 times,UNKNOWN,CLINC OOS Dataset (test),oos
+432,"I have to contact customer assistance, can I get some help?",HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_customer_service
+2923,getting invoice,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=INVOICE; intent=get_invoice
+980,editing premium account,FAQ,Bitext Customer Support Intent Dataset,category=ACCOUNT; intent=edit_account
+1035,want help to talk to someone,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+1723,FROM 88066 LOST £12 HELP,SPAM,UCI SMS Spam Collection,spam
+1329,need assistance solving problems with payment,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=PAYMENT; intent=payment_issue
+365,I'm trying to find information about creating users,FAQ,Bitext Customer Support Intent Dataset,category=ACCOUNT; intent=create_account
+1859,Want explicit SEX in 30 secs? Ring 02073162414 now! Costs 20p/min Gsex POBOX 2667 WC1N 3XX,SPAM,UCI SMS Spam Collection,spam
+246,"I have to talk to customer support, can I get some help?",HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_customer_service
+2103,how much is it to get more data on my phone plan,UNKNOWN,CLINC OOS Dataset (test),oos
+1590,I don't know how to check the available payment methods,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=PAYMENT; intent=check_payment_methods
+633,what are the different types of tvs,UNKNOWN,CLINC OOS Dataset (test),oos
+1101,is there a way to submit feedback for your company?,FAQ,Bitext Customer Support Intent Dataset,category=FEEDBACK; intent=review
+3011,prfoblems with cancelling order,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=ORDER; intent=cancel_order
+2584,I need help to receive an reimbursement of money,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=REFUND; intent=get_refund
+3396,"I need to talk to a live agent, can I get some help?",HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+2209,where do I submit feedback about your company?,FAQ,Bitext Customer Support Intent Dataset,category=FEEDBACK; intent=review
+425,what's my horoscope today,UNKNOWN,CLINC OOS Dataset (train),oos
+2058,ya have a free of charge number to talk to customer service,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_customer_service
+920,New TEXTBUDDY Chat 2 horny guys in ur area 4 just 25p Free 2 receive Search postcode or at gaytextbuddy.com. TXT ONE name to 89693. 08715500022 rpl Stop 2 cnl,SPAM,UCI SMS Spam Collection,spam
+265,I want help seeing purchase status,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=ORDER; intent=track_order
+1852,what do I have to do to see the rebate status?,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=REFUND; intent=track_refund
+2512,what do I have to do to speak to an operator?,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+3433,i'd like to renew my subscription to playboy,UNKNOWN,CLINC OOS Dataset (test),oos
+1019,okmail: Dear Dave this is your final notice to collect your 4* Tenerife Holiday or #5000 CASH award! Call 09061743806 from landline. TCs SAE Box326 CW25WX 150ppm,SPAM,UCI SMS Spam Collection,spam
+1603,"Fantasy Football is back on your TV. Go to Sky Gamestar on Sky Active and play £250k Dream Team. Scoring starts on Saturday, so register now!SKY OPT OUT to 88088",SPAM,UCI SMS Spam Collection,spam
+1250,who was the first capcom character,UNKNOWN,CLINC OOS Dataset (train),oos
+2351,i have to sign up to ur newsletter can uhelp me,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=SUBSCRIPTION; intent=newsletter_subscription
+380,tell me more about bill gates,UNKNOWN,CLINC OOS Dataset (test),oos
+1161,"As a SIM subscriber, you are selected to receive a Bonus! Get it delivered to your door, Txt the word OK to No: 88600 to claim. 150p/msg, EXP. 30Apr",SPAM,UCI SMS Spam Collection,spam
+1955,when was kobe bryant born,UNKNOWN,CLINC OOS Dataset (train),oos
+3150,want assistance speajing to a person,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+3072,where does jiu jitsu originate,UNKNOWN,CLINC OOS Dataset (test),oos
+528,I don't know how to check the early exit charge,FAQ,Bitext Customer Support Intent Dataset,category=CANCEL; intent=check_cancellation_fee
+2342,where can i see the ETA of purchase,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=ORDER; intent=track_order
+2499,i dont kno how to inform of an error with a registration,FAQ,Bitext Customer Support Intent Dataset,category=ACCOUNT; intent=registration_problems
+2214,"3 FREE TAROT TEXTS! Find out about your love life now! TRY 3 FOR FREE! Text CHANCE to 85555 16 only! After 3 Free, Msgs £1.50 each",SPAM,UCI SMS Spam Collection,spam
+789,"I have got to modify purchase , how do I do it?",ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=ORDER; intent=change_order
+1220,what size pipes are used for sinks,UNKNOWN,CLINC OOS Dataset (test),oos
+174,I would like to see what hours I can call customer support,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_customer_service
+630,I'd like to soeak with customer assistance could uhelp me,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_customer_service
+1967,i need assistance to cancel my account,FAQ,Bitext Customer Support Intent Dataset,category=ACCOUNT; intent=delete_account
+509,I want assistance to submit the shipping address,FAQ,Bitext Customer Support Intent Dataset,category=SHIPPING; intent=set_up_shipping_address
+1683,open another account,FAQ,Bitext Customer Support Intent Dataset,category=ACCOUNT; intent=create_account
+466,how many parks are within 20 miles of me,UNKNOWN,CLINC OOS Dataset (test),oos
+2486,what time do i need to arrive to make it on time,UNKNOWN,CLINC OOS Dataset (test),oos
+118,do laundry,UNKNOWN,CLINC OOS Dataset (test),oos
+1752,is it possible to cancel order ?,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=ORDER; intent=cancel_order
+934,I want to see at what time I ca contact customer assistance,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_customer_service
+1511,important information 4 orange user . today is your lucky day!2find out why log onto http://www.urawinner.com THERE'S A FANTASTIC SURPRISE AWAITING YOU!,SPAM,UCI SMS Spam Collection,spam
+2949,I want to make a customer reclamation against your business,FAQ,Bitext Customer Support Intent Dataset,category=FEEDBACK; intent=complaint
+1307,create emergency phone numbers list,UNKNOWN,CLINC OOS Dataset (test),oos
+79,is it too late to wear white,UNKNOWN,CLINC OOS Dataset (test),oos
+226,I'm trying to see the current status of order,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=ORDER; intent=track_order
+2536,i try to request a restitution of money,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=REFUND; intent=get_refund
+1495,"I want to talk with customer support, how can I do it?",HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_customer_service
+762,how can i root an android phone,UNKNOWN,CLINC OOS Dataset (validation),oos
+2162,wanna notify of goddamn errors with online payment,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=PAYMENT; intent=payment_issue
+465,I need help seeing how son can I expect my order,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=DELIVERY; intent=delivery_period
+632,need assistance talking to someone,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+2516,how much has the market gone up or down so far in 2019,UNKNOWN,CLINC OOS Dataset (train),oos
+968,I do not know how to subscribe to the corporate newsletter,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=SUBSCRIPTION; intent=newsletter_subscription
+168,what time do i have to go to work today,UNKNOWN,CLINC OOS Dataset (test),oos
+1798,help me check how soon can I expect my fucking product,FAQ,Bitext Customer Support Intent Dataset,category=DELIVERY; intent=delivery_period
+333,i want assistance speaking to ann assistant,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+2999,which marvel character has appeared in the most movies,UNKNOWN,CLINC OOS Dataset (train),oos
+711,I'd like to unsubscrie to the corporate newsletter help me,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=SUBSCRIPTION; intent=newsletter_subscription
+2279,"I have to talk with customer service, how can I do it?",HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_customer_service
+1047,what do I have to do to set up the new shipping addeess?,FAQ,Bitext Customer Support Intent Dataset,category=SHIPPING; intent=set_up_shipping_address
+3336,clear my search history,UNKNOWN,CLINC OOS Dataset (test),oos
+1939,where can i find information about a lost pwd,FAQ,Bitext Customer Support Intent Dataset,category=ACCOUNT; intent=recover_password
+2778,"Xmas & New Years Eve tickets are now on sale from the club, during the day from 10am till 8pm, and on Thurs, Fri & Sat night this week. They're selling fast!",SPAM,UCI SMS Spam Collection,spam
+63,I'd like to tell you my deepest darkest fantasies. Call me 09094646631 just 60p/min. To stop texts call 08712460324 (nat rate),SPAM,UCI SMS Spam Collection,spam
+2682,"I don't want a chatbot, direct to me a bloody agent",HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+948,get me the rates of hacking susceptibility for household in my area,UNKNOWN,CLINC OOS Dataset (train),oos
+582,what do I need to do to talk with a human agent?,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+695,i need assistance checking the withdrawal charges,FAQ,Bitext Customer Support Intent Dataset,category=CANCEL; intent=check_cancellation_fee
+2074,how do i use my microwaves defrost,UNKNOWN,CLINC OOS Dataset (test),oos
+704,Call Germany for only 1 pence per minute! Call from a fixed line via access number 0844 861 85 85. No prepayment. Direct access!,SPAM,UCI SMS Spam Collection,spam
+543,help me chatting with a person,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+3332,what was the area code of the phone number from that last scam call,UNKNOWN,CLINC OOS Dataset (train),oos
+2579,how to check at what time i can contact customer support,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_customer_service
+1306,I don't know what to do to cancel order,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=ORDER; intent=cancel_order
+1279,I do not know what I have to do to chat with a human agent,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+651,updating details on pro account,FAQ,Bitext Customer Support Intent Dataset,category=ACCOUNT; intent=edit_account
+1738,I need assistance to talk to an operator,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+955,where to acquire a few of ur item,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=ORDER; intent=place_order
+3395,can I edit my shipping address?,FAQ,Bitext Customer Support Intent Dataset,category=SHIPPING; intent=change_shipping_address
+3219,"5 Free Top Polyphonic Tones call 087018728737, National Rate. Get a toppoly tune sent every week, just text SUBPOLY to 81618, £3 per pole. UnSub 08718727870.",SPAM,UCI SMS Spam Collection,spam
+2950,More people are dogging in your area now. Call 09090204448 and join like minded guys. Why not arrange 1 yourself. There's 1 this evening. A£1.50 minAPN LS278BB,SPAM,UCI SMS Spam Collection,spam
+1172,want help to report a trouble with payment,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=PAYMENT; intent=payment_issue
+1624,wanna check the status of order how to dl it,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=ORDER; intent=track_order
+1146,I try to delete a product from order,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=ORDER; intent=change_order
+708,can you direct to me a damn operator?,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+584,I do not know what I need to do to contact someone,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+552,"I have lost the bill #37777, will you send it to me?",ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=INVOICE; intent=get_invoice
+2513,how to sends some feedback for ur products,FAQ,Bitext Customer Support Intent Dataset,category=FEEDBACK; intent=review
+1816,YOU HAVE WON! As a valued Vodafone customer our computer has picked YOU to win a £150 prize. To collect is easy. Just call 09061743386,SPAM,UCI SMS Spam Collection,spam
+806,help checking what shipment methods i can choose,FAQ,Bitext Customer Support Intent Dataset,category=DELIVERY; intent=delivery_options
+2356,show me purchase statud,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=ORDER; intent=track_order
+2972,write the next chapter of my biography and let me know when you have finished it,UNKNOWN,CLINC OOS Dataset (test),oos
+1359,"I have got to see when will my item arrive, how do I do it?",FAQ,Bitext Customer Support Intent Dataset,category=DELIVERY; intent=delivery_period
+1287,I need to see purchase current status,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=ORDER; intent=track_order
+439,whzt do i have to do to get my invoice #00108,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=INVOICE; intent=get_invoice
+1362,can i speak with someone,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+48,what is the fee for a cash advance,UNKNOWN,CLINC OOS Dataset (test),oos
+525,need assistance to speak to a live agent,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+778,can you help me notify of an error with payments?,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=PAYMENT; intent=payment_issue
+631,I need assistance speaking to a human agent,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+1542,need help chatting with an agent,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+2521,need to look for the bill #85632 coyld ya help me,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=INVOICE; intent=check_invoice
+3183,what do i hgave to do to shop some of ur item,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=ORDER; intent=place_order
+673,I have a trouble trying to change my delivery address,FAQ,Bitext Customer Support Intent Dataset,category=SHIPPING; intent=change_shipping_address
+2863,check the status of my amazon orders for me,UNKNOWN,CLINC OOS Dataset (test),oos
+787,I don't know what to do to inform of errors with payment,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=PAYMENT; intent=payment_issue
+223,"Your free ringtone is waiting to be collected. Simply text the password ""MIX"" to 85069 to verify. Get Usher and Britney. FML, PO Box 5249, MK17 92H. 450Ppw 16",SPAM,UCI SMS Spam Collection,spam
+3136,how do I chat with an operator?,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+318,December only! Had your mobile 11mths+? You are entitled to update to the latest colour camera mobile for Free! Call The Mobile Update Co FREE on 08002986906,SPAM,UCI SMS Spam Collection,spam
+2915,need help to pseak with an agent,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+599,URGENT! We are trying to contact you. Last weekends draw shows that you have won a £900 prize GUARANTEED. Call 09061701851. Claim code K61. Valid 12hours only,SPAM,UCI SMS Spam Collection,spam
+3007,I have problems correcting my address,FAQ,Bitext Customer Support Intent Dataset,category=SHIPPING; intent=change_shipping_address
+737,buy artilce,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=ORDER; intent=place_order
+2602,can I see at what time I can contact customer service?,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_customer_service
+1000,"you aren't helpful at all, help me speaking to a person",HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+1209,I do not know how I can earn some products,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=ORDER; intent=place_order
+60,I need to cancel purchase,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=ORDER; intent=cancel_order
+1092,"YOUR CHANCE TO BE ON A REALITY FANTASY SHOW call now = 08707509020 Just 20p per min NTT Ltd, PO Box 1327 Croydon CR9 5WB 0870 is a national = rate call.",SPAM,UCI SMS Spam Collection,spam
+459,I do not know ohw to acquire an item,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=ORDER; intent=place_order
+1186,I want help to see at what time I can reach customer service,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_customer_service
+3170,i dont know what i need to do to talk to a person,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+1733,how can i see what hours customer service available is,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_customer_service
+2547,i do not know what to do to delete the pro account,FAQ,Bitext Customer Support Intent Dataset,category=ACCOUNT; intent=delete_account
+2191,want help to make a customer claim,FAQ,Bitext Customer Support Intent Dataset,category=FEEDBACK; intent=complaint
+1340,help me checking the available payment options,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=PAYMENT; intent=check_payment_methods
+2389,I want to talk with customer support,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_customer_service
+2198,I don't know what I need to do to chat with a person,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+1696,i want help to see what hours i can call custmer service,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_customer_service
+252,how many years do you need to be in the army to get a college tuition,UNKNOWN,CLINC OOS Dataset (test),oos
+3076,"For ur chance to win a £250 cash every wk TXT: ACTION to 80608. T's&C's www.movietrivia.tv custcare 08712405022, 1x150p/wk",SPAM,UCI SMS Spam Collection,spam
+3109,where do I check what hours I can call customer service?,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_customer_service
+2931,"I have entered a wrong fucking delivery address, correct it",FAQ,Bitext Customer Support Intent Dataset,category=SHIPPING; intent=change_shipping_address
+3017,when did the mls start,UNKNOWN,CLINC OOS Dataset (train),oos
+1841,Bought one ringtone and now getting texts costing 3 pound offering more tones etc,SPAM,UCI SMS Spam Collection,spam
+3139,How come it takes so little time for a child who is afraid of the dark to become a teenager who wants to stay out all night?,SPAM,UCI SMS Spam Collection,spam
+2848,CLAIRE here am havin borin time & am now alone U wanna cum over 2nite? Chat now 09099725823 hope 2 C U Luv CLAIRE xx Calls£1/minmoremobsEMSPOBox45PO139WA,SPAM,UCI SMS Spam Collection,spam
+3078,i dont knowq what i need to do to switch to the account,FAQ,Bitext Customer Support Intent Dataset,category=ACCOUNT; intent=switch_account
+2909,Do you want 750 anytime any network mins 150 text and a NEW VIDEO phone for only five pounds per week call 08002888812 or reply for delivery tomorrow,SPAM,UCI SMS Spam Collection,spam
+247,help talking to somebody,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+1748,"I have to submit my new delivery address, will you help me?",FAQ,Bitext Customer Support Intent Dataset,category=SHIPPING; intent=set_up_shipping_address
+1212,I want help to check what hours I can call customer service,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_customer_service
+1367,i do notknow what i have to do to get the bill #85632,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=INVOICE; intent=get_invoice
+2437,Had your mobile 10 mths? Update to latest Orange camera/video phones for FREE. Save £s with Free texts/weekend calls. Text YES for a callback orno to opt out,SPAM,UCI SMS Spam Collection,spam
+1944,how's the real estate market doing this week,UNKNOWN,CLINC OOS Dataset (test),oos
+915,XMAS Prize draws! We are trying to contact U. Todays draw shows that you have won a £2000 prize GUARANTEED. Call 09058094565 from land line. Valid 12hrs only,SPAM,UCI SMS Spam Collection,spam
+2426,i dont know what i have to do to create a freemium account,FAQ,Bitext Customer Support Intent Dataset,category=ACCOUNT; intent=create_account
+2678,what time is a star is born showing,UNKNOWN,CLINC OOS Dataset (test),oos
+2645,is the shutdown over,UNKNOWN,CLINC OOS Dataset (train),oos
+2432,help me to check if there are nay news on the refund,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=REFUND; intent=track_refund
+2464,help checking in what cases can i ask to be reimbursed,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=REFUND; intent=check_refund_policy
+3423,could uhelp me check the cancellation penalty,FAQ,Bitext Customer Support Intent Dataset,category=CANCEL; intent=check_cancellation_fee
+2684,what was the point of the crusades,UNKNOWN,CLINC OOS Dataset (test),oos
+62,what is saas marketing,UNKNOWN,CLINC OOS Dataset (train),oos
+457,The current leading bid is 151. To pause this auction send OUT. Customer Care: 08718726270,SPAM,UCI SMS Spam Collection,spam
+2109,wanna know more about correcting my shipping address,FAQ,Bitext Customer Support Intent Dataset,category=SHIPPING; intent=change_shipping_address
+222,where do I retrieve my user access key?,FAQ,Bitext Customer Support Intent Dataset,category=ACCOUNT; intent=recover_password
+1308,Call Germany for only 1 pence per minute! Call from a fixed line via access number 0844 861 85 85. No prepayment. Direct access! www.telediscount.co.uk,SPAM,UCI SMS Spam Collection,spam
+3021,tell me who makes the best dvd's for movie storage,UNKNOWN,CLINC OOS Dataset (test),oos
+1800,i dont know what i have to do to download my bill #85632,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=INVOICE; intent=get_invoice
+942,find out where one can get involved in discussing local election issues,UNKNOWN,CLINC OOS Dataset (test),oos
+2374,I don't know how to contact an agent,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+3335,"Bears Pic Nick, and Tom, Pete and ... Dick. In fact, all types try gay chat with photo upload call 08718730666 (10p/min). 2 stop texts call 08712460324",SPAM,UCI SMS Spam Collection,spam
+1741,why is the sky blue,UNKNOWN,CLINC OOS Dataset (test),oos
+2183,* FREE* POLYPHONIC RINGTONE Text SUPER to 87131 to get your FREE POLY TONE of the week now! 16 SN PoBox202 NR31 7ZS subscription 450pw,SPAM,UCI SMS Spam Collection,spam
+1478,is marijuana addictive,UNKNOWN,CLINC OOS Dataset (validation),oos
+3028,wanna speak to customer support how can i do it,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_customer_service
+895,I try to contact a fucking operator,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+745,where to see at what time I can contact customer service?,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_customer_service
+975,I would like to report issues with sign-up,FAQ,Bitext Customer Support Intent Dataset,category=ACCOUNT; intent=registration_problems
+2541,assistance seeing ur bloody available payment methods,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=PAYMENT; intent=check_payment_methods
+932,"SMS. ac JSco: Energy is high, but u may not know where 2channel it. 2day ur leadership skills r strong. Psychic? Reply ANS w/question. End? Reply END JSCO",SPAM,UCI SMS Spam Collection,spam
+3372,need assistnce acquiring an item,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=ORDER; intent=place_order
+2236,what hours can i get in touch with customer service,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_customer_service
+35,tracking refund,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=REFUND; intent=track_refund
+371,I need assistance closing a freemium account,FAQ,Bitext Customer Support Intent Dataset,category=ACCOUNT; intent=delete_account
+428,how to reset my user account key?,FAQ,Bitext Customer Support Intent Dataset,category=ACCOUNT; intent=recover_password
+53,i do not know how i can ese the termination charges,FAQ,Bitext Customer Support Intent Dataset,category=CANCEL; intent=check_cancellation_fee
+2614,I need assistance speaking with an assistant,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+2307,help me check what hours I can contact customer service,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_customer_service
+922,problem with account terminations,FAQ,Bitext Customer Support Intent Dataset,category=ACCOUNT; intent=delete_account
+1008,"I don't want to talk to a bot, direct to me a human agent",HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+1471,help to see what hours I can reach customer service,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_customer_service
+3178,i want assistance contacting a person,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+3343,where could I get information about account deletions?,FAQ,Bitext Customer Support Intent Dataset,category=ACCOUNT; intent=delete_account
+743,help to talk with a person,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+2939,from www.Applausestore.com MonthlySubscription@50p/msg max6/month T&CsC web age16 2stop txt stop,SPAM,UCI SMS Spam Collection,spam
+2483,i dont know what i have to do to speak with an assistant,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+2953,"URGENT!: Your Mobile No. was awarded a £2,000 Bonus Caller Prize on 02/09/03! This is our 2nd attempt to contact YOU! Call 0871-872-9755 BOX95QU",SPAM,UCI SMS Spam Collection,spam
+1792,how can i add my signature to the proposed bill legalizing prostitution,UNKNOWN,CLINC OOS Dataset (test),oos
+1703,which came first; greek mythology or roman mythology,UNKNOWN,CLINC OOS Dataset (test),oos
+437,modifying ingormation on platinum account,FAQ,Bitext Customer Support Intent Dataset,category=ACCOUNT; intent=edit_account
+1237,Loans for any purpose even if you have Bad Credit! Tenants Welcome. Call NoWorriesLoans.com on 08717111821,SPAM,UCI SMS Spam Collection,spam
+70,i dont know what i need to do to speak with a live agent,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+1929,where can i make a consumer claim against ur organization,FAQ,Bitext Customer Support Intent Dataset,category=FEEDBACK; intent=complaint
+2907,I need to retrieve my user accountPIN,FAQ,Bitext Customer Support Intent Dataset,category=ACCOUNT; intent=recover_password
+2539,can I speak with an agent?,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+2061,Show ur colours! Euro 2004 2-4-1 Offer! Get an England Flag & 3Lions tone on ur phone! Click on the following service message for info!,SPAM,UCI SMS Spam Collection,spam
+1507,what is naval engineering,UNKNOWN,CLINC OOS Dataset (validation),oos
+2830,PRIVATE! Your 2003 Account Statement for 07808 XXXXXX shows 800 un-redeemed S. I. M. points. Call 08719899217 Identifier Code: 41685 Expires 07/11/04,SPAM,UCI SMS Spam Collection,spam
+1642,show me the most popular nonfiction book currently on the market,UNKNOWN,CLINC OOS Dataset (test),oos
+627,"URGENT! Last weekend's draw shows that you have won £1000 cash or a Spanish holiday! CALL NOW 09050000332 to claim. T&C: RSTM, SW7 3SS. 150ppm",SPAM,UCI SMS Spam Collection,spam
+3031,help me to filea consumer reclamation,FAQ,Bitext Customer Support Intent Dataset,category=FEEDBACK; intent=complaint
+3185,assistance to contact somebody,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+157,can you help me check the cancellation charges?,FAQ,Bitext Customer Support Intent Dataset,category=CANCEL; intent=check_cancellation_fee
+2703,what do i need to do to recover my user account pin code,FAQ,Bitext Customer Support Intent Dataset,category=ACCOUNT; intent=recover_password
+2339,want assistance to talk with an operator,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+2855,Santa Calling! Would your little ones like a call from Santa Xmas eve? Call 09058094583 to book your time.,SPAM,UCI SMS Spam Collection,spam
+1960,where do i ilst the accepted payment modalities,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=PAYMENT; intent=check_payment_methods
+2466,I don't know what I have to do to get bill #00108,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=INVOICE; intent=get_invoice
+2523,+123 Congratulations - in this week's competition draw u have won the £1450 prize to claim just call 09050002311 b4280703. T&Cs/stop SMS 08718727868. Over 18 only 150ppm,SPAM,UCI SMS Spam Collection,spam
+3224,"Win the newest Harry Potter and the Order of the Phoenix (Book 5) reply HARRY, answer 5 questions - chance to be the first among readers!",SPAM,UCI SMS Spam Collection,spam
+2400,i cant sign up i need to inform of signup erroprs,FAQ,Bitext Customer Support Intent Dataset,category=ACCOUNT; intent=registration_problems
+1274,YOU ARE CHOSEN TO RECEIVE A £350 AWARD! Pls call claim number 09066364311 to collect your award which you are selected to receive as a valued mobile customer.,SPAM,UCI SMS Spam Collection,spam
+29,Hi I'm sue. I am 20 years old and work as a lapdancer. I love sex. Text me live - I'm i my bedroom now. text SUE to 89555. By TextOperator G2 1DA 150ppmsg 18+,SPAM,UCI SMS Spam Collection,spam
+595,Sorry! U can not unsubscribe yet. THE MOB offer package has a min term of 54 weeks> pls resubmit request after expiry. Reply THEMOB HELP 4 more info,SPAM,UCI SMS Spam Collection,spam
+2971,Update_Now - 12Mths Half Price Orange line rental: 400mins...Call MobileUpd8 on 08000839402 or call2optout=J5Q,SPAM,UCI SMS Spam Collection,spam
+1646,what are my local news stations,UNKNOWN,CLINC OOS Dataset (train),oos
+236,what is the largest state in the us,UNKNOWN,CLINC OOS Dataset (train),oos
+3203,i dont know how to inform od an error with signup,FAQ,Bitext Customer Support Intent Dataset,category=ACCOUNT; intent=registration_problems
+1730,what is a good laptop for gaming,UNKNOWN,CLINC OOS Dataset (test),oos
+3231,can you tell me the score of the heat game,UNKNOWN,CLINC OOS Dataset (test),oos
+1352,i need assistance to locate bill #85632,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=INVOICE; intent=check_invoice
+2582,Someone has conacted our dating service and entered your phone because they fancy you!To find out who it is call from landline 09111030116. PoBox12n146tf15,SPAM,UCI SMS Spam Collection,spam
+3228,what stores are at my local mall,UNKNOWN,CLINC OOS Dataset (test),oos
+1403,Want a new Video Phone? 750 anytime any network mins? Half price line rental free text for 3 months? Reply or call 08000930705 for free delivery,SPAM,UCI SMS Spam Collection,spam
+2595,can you explain a good risk strategy to me,UNKNOWN,CLINC OOS Dataset (test),oos
+1648,how much sugar was in my urine this morning,UNKNOWN,CLINC OOS Dataset (test),oos
+3014,i dont know what i need to do to obtain rebates of money,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=REFUND; intent=get_refund
+2091,i dont know how to shop a few of ur product,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=ORDER; intent=place_order
+2904,You have an important customer service announcement from PREMIER. Call FREEPHONE 0800 542 0578 now!,SPAM,UCI SMS Spam Collection,spam
+870,"Loan for any purpose £500 - £75,000. Homeowners + Tenants welcome. Have you been previously refused? We can still help. Call Free 0800 1956669 or text back 'help'",SPAM,UCI SMS Spam Collection,spam
+1434,"I have to cancel my subscription to your newsletter, help me",ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=SUBSCRIPTION; intent=newsletter_subscription
+1193,Text PASS to 69669 to collect your polyphonic ringtones. Normal gprs charges apply only. Enjoy your tones,SPAM,UCI SMS Spam Collection,spam
+243,"Do you realize that in about 40 years, we'll have thousands of old ladies running around with tattoos?",SPAM,UCI SMS Spam Collection,spam
+34,where could I shop several of your item?,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=ORDER; intent=place_order
+3012,is there a way to change your houses address,UNKNOWN,CLINC OOS Dataset (test),oos
+1519,assistance to see your money back guarantee,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=REFUND; intent=check_refund_policy
+2473,check at what time customer support available is,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_customer_service
+240,I want help talking with an assistant,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+2927,"Get 3 Lions England tone, reply lionm 4 mono or lionp 4 poly. 4 more go 2 www.ringtones.co.uk, the original n best. Tones 3GBP network operator rates apply",SPAM,UCI SMS Spam Collection,spam
+1435,seeing withdrawal penalty,FAQ,Bitext Customer Support Intent Dataset,category=CANCEL; intent=check_cancellation_fee
+2328,can you help me contact osmeone?,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+1898,king of acid,UNKNOWN,CLINC OOS Dataset (validation),oos
+1629,i want assistance to list the allowed payment modalitiess,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=PAYMENT; intent=check_payment_methods
+64,could ya help me cancel the account,FAQ,Bitext Customer Support Intent Dataset,category=ACCOUNT; intent=delete_account
+3413,"Your account has been credited with 500 FREE Text Messages. To activate, just txt the word: CREDIT to No: 80488 T&Cs www.80488.biz",SPAM,UCI SMS Spam Collection,spam
+2934,"I no longer want order , how do I cancel it?",ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=ORDER; intent=cancel_order
+958,what is happening in politicsu,UNKNOWN,CLINC OOS Dataset (test),oos
+2501,i cannot change several items of order,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=ORDER; intent=change_order
+2304,"I want to speak with damn customer support, help me",HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_customer_service
+2396,I need to switch an article of order,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=ORDER; intent=change_order
+2985,can you check on what it would cost me to upgrade my iphone with t-mobile,UNKNOWN,CLINC OOS Dataset (test),oos
+614,can youshow me what hours I can contact customer support?,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_customer_service
+593,URGENT! We are trying to contact U. Todays draw shows that you have won a £800 prize GUARANTEED. Call 09050003091 from land line. Claim C52. Valid12hrs only,SPAM,UCI SMS Spam Collection,spam
+3251,what do I ned to do to talk to someone?,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_human_agent
+2422,ya have newsletter,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=SUBSCRIPTION; intent=newsletter_subscription
+1760,how much money does radiohead earn a year,UNKNOWN,CLINC OOS Dataset (train),oos
+2982,help to leave a comment for your services,FAQ,Bitext Customer Support Intent Dataset,category=FEEDBACK; intent=review
+196,help seeing in which situations can I request my money back,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=REFUND; intent=check_refund_policy
+1617,need assistance to obtain a refund of money,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=REFUND; intent=get_refund
+1305,is it possible to create a freemium account?,FAQ,Bitext Customer Support Intent Dataset,category=ACCOUNT; intent=create_account
+1849,tell me what the best shampoo is for someone with dry scalp,UNKNOWN,CLINC OOS Dataset (test),oos
+2417,how can I see what hours I cn contact customer support?,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_customer_service
+488,what is the friendliest breed,UNKNOWN,CLINC OOS Dataset (validation),oos
+2079,do you have an e-mail to contact customer assistance?,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_customer_service
+659,I want assistance calling customer support,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_customer_service
+2038,what does it mean if i dream of falling off a building,UNKNOWN,CLINC OOS Dataset (validation),oos
+1964,how much are the clorox detergents,UNKNOWN,CLINC OOS Dataset (test),oos
+1098,I call to check how long it takes for the purchase to arrive,ACCOUNT_OPS,Bitext Customer Support Intent Dataset,category=DELIVERY; intent=delivery_period
+1371,I want to talk to fucking customer assistance,HARD_QUESTION,Bitext Customer Support Intent Dataset,category=CONTACT; intent=contact_customer_service
