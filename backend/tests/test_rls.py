@@ -13,11 +13,11 @@ import pytest
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-pytestmark = pytest.mark.integration
-
 from app.db import SessionLocal, init_db
 from app.models.tenant import Tenant
 from app.models.user import Role, User
+
+pytestmark = pytest.mark.integration
 
 
 # ── Fixtures ──────────────────────────────────────────────────────────────────
