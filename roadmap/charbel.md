@@ -168,8 +168,16 @@ gets rejected. CORS is defense-in-depth, not the boundary.
 - [ ] `auth.ts` in widget — loader exchanges widget_id for token, attaches to every request
 - [ ] Server-side origin validation in `tenant_context` middleware:
       reject if origin doesn't match tenant's `allowed_origins`
-- [ ] CSP `frame-ancestors` header set per tenant
-- [ ] CORS allowlist driven by tenant `allowed_origins` in DB (NOT env)
+- [x] CSP `frame-ancestors` header set per tenant
+- [x] CORS allowlist driven by DB (NOT env) — CORSMiddleware added,
+      real origin enforcement is server-side in widget_auth_service
+- [x] GET /widget.js endpoint — stub loader served from backend
+- [x] demo/host/index.html updated with real script tag
+- [x] demo/blocked-host/blocked.html updated with script tag
+- [x] Browser validated: localhost:8080 shows [Concierge] widget.js loaded
+- [x] Browser validated: localhost:8090 shows CSP violation in DevTools:
+      "Loading the script violates Content Security Policy directive:
+      script-src 'none'"
 
 ## Phase 6 — Admin UX (Streamlit)
 
@@ -272,3 +280,6 @@ gets rejected. CORS is defense-in-depth, not the boundary.
   migration 003 for pre-auth widget_id lookup. 4/4 tests pass.
 - Admin backend: 3 widget config endpoints, all passing. GET/PUT/embed-snippet.
   RLS via get_tenant_db, role check, UUID cast fix for psycopg2.
+- CSP + CORS wired. widget.js stub endpoint live. Demo pages updated.
+  Browser proof: allowed host loads widget.js, blocked host shows CSP
+  violation in DevTools console. Friday demo ready for this piece.

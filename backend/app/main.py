@@ -38,18 +38,34 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Concierge backend", lifespan=lifespan)
 
-# ── Mohammad's routers ───────────────────────────────────────────────────────
-from app.api.admin import router as admin_router    # noqa: E402
-from app.api.auth import router as auth_router      # noqa: E402
-from app.api.chat import router as chat_router  # noqa: E402
+from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
+from app.middleware.csp import CSPMiddleware        # noqa: E402
+
+# CORS: allow_origins=["*"] because per-tenant origin validation happens
+# server-side in widget_auth_service.exchange_token(). CORS is defense-in-depth.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "PUT", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
+)
+app.add_middleware(CSPMiddleware)
+
+# ── Routers ──────────────────────────────────────────────────────────────────
+from app.api.admin import router as admin_router      # noqa: E402
+from app.api.auth import router as auth_router        # noqa: E402
+from app.api.chat import router as chat_router        # noqa: E402
 from app.api.tenants import router as tenants_router  # noqa: E402
-from app.api.widget import router as widget_router  # noqa: E402
+from app.api.widget import router as widget_router    # noqa: E402
+from app.api.widget_js import router as widget_js_router  # noqa: E402
 
 app.include_router(admin_router)
 app.include_router(auth_router, prefix="/auth", tags=["auth"])
 app.include_router(chat_router)
 app.include_router(tenants_router, prefix="/tenants", tags=["tenants"])
 app.include_router(widget_router)
+app.include_router(widget_js_router)
 
 # ── Health (no auth required) ────────────────────────────────────────────────
 @app.get("/health", tags=["health"])
