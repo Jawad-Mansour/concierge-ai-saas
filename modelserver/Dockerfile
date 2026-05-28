@@ -6,6 +6,14 @@ FROM python:3.12-slim AS deps
 # Install uv via pip — avoids ghcr.io which is blocked on some networks
 RUN pip install uv==0.5.4 --no-cache-dir
 
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    locales \
+    && locale-gen en_US.UTF-8 \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV LANG=en_US.UTF-8
+ENV LC_ALL=en_US.UTF-8
+
 ENV VIRTUAL_ENV=/opt/venv \
     UV_PROJECT_ENVIRONMENT=/opt/venv \
     UV_LINK_MODE=copy \
@@ -23,8 +31,15 @@ RUN uv sync --frozen --no-dev --python $VIRTUAL_ENV/bin/python
 # ── runtime ──────────────────────────────────────────────────
 FROM python:3.12-slim
 
+RUN apt-get update && apt-get install -y --no-install-recommends locales \
+    && echo "en_US.UTF-8 UTF-8" > /etc/locale.gen \
+    && locale-gen \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY --from=deps /opt/venv /opt/venv
 
+ENV LANG=en_US.UTF-8
+ENV LC_ALL=en_US.UTF-8
 ENV VIRTUAL_ENV=/opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 ENV PYTHONPATH=/app

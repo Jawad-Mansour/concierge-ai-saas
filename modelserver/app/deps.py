@@ -2,11 +2,9 @@
 """Vault credential bootstrap + FastAPI auth dependency.
 
 Vault KV path:
-    secret/data/modelserver/service_credential
+    secret/data/concierge/service_auth  (field: token)
 
-TBD: confirm against `infra/vault/policies/` (Mohammad) before merging the
-serving slice. The placeholder is treated as load-bearing — the agent will
-swap in the real path during integration.
+Seeded by infra/vault/seed.sh under the concierge/ prefix.
 """
 
 from __future__ import annotations
@@ -22,7 +20,7 @@ from .telemetry import structured_log
 
 logger = logging.getLogger("modelserver.deps")
 
-VAULT_KV_PATH = "modelserver/service_credential"  # mount: secret/, data prefix added by hvac kv v2
+VAULT_KV_PATH = "concierge/service_auth"  # mount: secret/, data prefix added by hvac kv v2
 
 _BOOT_CREDENTIAL: str | None = None
 
