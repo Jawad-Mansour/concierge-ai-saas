@@ -23,9 +23,10 @@ def test_percentiles_monotone():
     p95 = latency_probe._pct(values, 95)
     p99 = latency_probe._pct(values, 99)
     assert p50 <= p95 <= p99
-    assert p50 == 51.0  # round(0.5 * 99) = 50 → index 50 → value 51
-    assert p95 == 96.0
-    assert p99 == 100.0
+    # _pct uses round(p/100 * (n-1)) on the 0-indexed sorted list (n=100 here).
+    assert p50 == 51.0  # round(0.50 * 99) = 50 → index 50 → value 51
+    assert p95 == 95.0  # round(0.95 * 99) = 94 → index 94 → value 95
+    assert p99 == 99.0  # round(0.99 * 99) = 98 → index 98 → value 99
 
 
 def test_pct_on_empty_returns_zero():
