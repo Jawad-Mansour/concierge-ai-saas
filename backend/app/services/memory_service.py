@@ -1,6 +1,8 @@
 # Owner: Ali
 from __future__ import annotations
 
+import json
+import os
 from dataclasses import dataclass, field
 from time import time
 from typing import Callable, Literal, Protocol
@@ -112,6 +114,65 @@ class InMemoryMemoryStore:
 
     def clear(self, *, key: str) -> None:
         self.entries.pop(key, None)
+
+
+class RedisMemoryStore:
+    """Redis-backed short-term memory store for shared backend runtime."""
+
+    def __init__(self, *, redis_url: str | None = None, client=None) -> None:
+        if client is not None:
+            self.client = client
+            return
+        try:
+            import redis
+        except ImportError as exc:
+            raise RuntimeError("redis package is required for RedisMemoryStore") from exc
+        self.client = redis.Redis.from_url(redis_url or os.getenv("REDIS_URL", "redis://redis:6379/0"))
+
+    def append(
+        self,
+        *,
+        key: str,
+        message: MemoryMessage,
+        ttl_seconds: int,
+        max_messages: int,
+    ) -> None:
+        self.client.rpush(key, self._serialize(message))
+        self.client.ltrim(key, -max_messages, -1)
+        self.client.expire(key, ttl_seconds)
+
+    def get(self, *, key: str) -> list[MemoryMessage]:
+        return [self._deserialize(item) for item in self.client.lrange(key, 0, -1)]
+
+    def clear(self, *, key: str) -> None:
+        self.client.delete(key)
+
+    def _serialize(self, message: MemoryMessage) -> str:
+        return json.dumps(
+            {
+                "tenant_id": message.tenant_id,
+                "conversation_id": message.conversation_id,
+                "role": message.role,
+                "content": message.content,
+                "created_at": message.created_at,
+                "trace_id": message.trace_id,
+            },
+            separators=(",", ":"),
+            sort_keys=True,
+        )
+
+    def _deserialize(self, item) -> MemoryMessage:
+        if isinstance(item, bytes):
+            item = item.decode("utf-8")
+        data = json.loads(item)
+        return MemoryMessage(
+            tenant_id=data["tenant_id"],
+            conversation_id=data["conversation_id"],
+            role=data["role"],
+            content=data["content"],
+            created_at=float(data["created_at"]),
+            trace_id=data.get("trace_id"),
+        )
 
 
 class MemoryService:

@@ -5,6 +5,7 @@ from app.services.memory_service import (
     InMemoryMemoryStore,
     MemoryService,
     MemoryValidationError,
+    RedisMemoryStore,
     TenantContextError,
 )
 
@@ -18,6 +19,30 @@ class FakeClock:
 
     def advance(self, seconds: float) -> None:
         self.now += seconds
+
+
+class FakeRedisClient:
+    def __init__(self) -> None:
+        self.data = {}
+        self.expirations = {}
+
+    def rpush(self, key, value):
+        self.data.setdefault(key, []).append(value)
+
+    def ltrim(self, key, start, end):
+        values = self.data.get(key, [])
+        self.data[key] = values[start:] if end == -1 else values[start : end + 1]
+
+    def expire(self, key, ttl_seconds):
+        self.expirations[key] = ttl_seconds
+
+    def lrange(self, key, start, end):
+        values = self.data.get(key, [])
+        return values[start:] if end == -1 else values[start : end + 1]
+
+    def delete(self, key):
+        self.data.pop(key, None)
+        self.expirations.pop(key, None)
 
 
 def memory_payload(**overrides):
@@ -171,3 +196,31 @@ def test_memory_key_matches_tenant_erasure_pattern():
         service._key("tenant-a", "conversation-a")
         == "session:tenant:tenant-a:conversation:conversation-a:memory"
     )
+
+
+def test_redis_memory_store_appends_trims_and_sets_ttl():
+    client = FakeRedisClient()
+    store = RedisMemoryStore(client=client)
+    service = MemoryService(store, ttl_seconds=60, max_messages=2)
+
+    service.append_message(memory_payload(content="One"))
+    service.append_message(memory_payload(content="Two"))
+    service.append_message(memory_payload(content="Three"))
+
+    key = service._key("tenant-a", "conversation-a")
+    messages = service.get_messages(tenant_id="tenant-a", conversation_id="conversation-a")
+
+    assert [message.content for message in messages] == ["Two", "Three"]
+    assert client.expirations[key] == 60
+
+
+def test_redis_memory_store_clear_deletes_key():
+    client = FakeRedisClient()
+    store = RedisMemoryStore(client=client)
+    service = MemoryService(store)
+
+    service.append_message(memory_payload())
+    service.clear_conversation(tenant_id="tenant-a", conversation_id="conversation-a")
+
+    assert client.data == {}
+    assert client.expirations == {}
