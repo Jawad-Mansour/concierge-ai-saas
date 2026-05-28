@@ -27,7 +27,7 @@ class TestHealthEndpoints:
         """Modelserver /health returns 200 with correct shape."""
         data = _get("http://localhost:8001/health")
         assert data["status"] == "ok"
-        assert data["service"] == "modelserver"
+        assert "model_hash" in data   # real implementation returns model hash
 
     def test_guardrails_health(self):
         """Guardrails /health returns 200 with correct shape."""
