@@ -1,6 +1,9 @@
 # Owner: Ali
+from types import SimpleNamespace
+
 import pytest
 
+from app.api.chat import ChatRequestBody, chat
 from app.repositories.embedding_repo import EmbeddingChunk, InMemoryEmbeddingRepository
 from app.repositories.lead_repo import InMemoryLeadRepository
 from app.services.agent_service import AgentService, ToolPlan, ToolRegistry
@@ -12,12 +15,30 @@ from app.services.router_service import RouterService
 
 
 class FixedClassifier:
-    def __init__(self, label, confidence):
+    def __init__(self, label, confidence, degraded=False):
         self.label = label
         self.confidence = confidence
+        self.degraded = degraded
 
     def classify(self, message):
         return self.label, self.confidence
+
+
+class JanaClassification:
+    def __init__(self, predicted_class, confidence, degraded=False):
+        self.predicted_class = predicted_class
+        self.confidence = confidence
+        self.degraded = degraded
+
+
+class AsyncClassifierClient:
+    def __init__(self, classification):
+        self.classification = classification
+        self.calls = []
+
+    async def classify(self, *, tenant_id, message):
+        self.calls.append({"tenant_id": tenant_id, "message": message})
+        return self.classification
 
 
 class SequencePlanner:
@@ -118,3 +139,53 @@ def test_chat_rejects_unknown_fields():
 
     with pytest.raises(ChatValidationError):
         service.handle_message(chat_payload(tenant_override="tenant-b"))
+
+
+def test_chat_uses_jana_classifier_result_when_supplied():
+    service = ChatService(
+        memory_service=memory_service(),
+        router_service=RouterService(rag_tool=rag_service()),
+    )
+
+    response = service.handle_message(
+        chat_payload(),
+        classification=JanaClassification("FAQ", 0.91),
+    )
+
+    assert response.decision == "rag"
+    assert response.message == "Team pricing starts at 49 dollars per month."
+
+
+def test_chat_treats_degraded_jana_classifier_as_agent():
+    service = ChatService(
+        memory_service=memory_service(),
+        router_service=RouterService(rag_tool=rag_service()),
+    )
+
+    response = service.handle_message(
+        chat_payload(),
+        classification=JanaClassification("FAQ", 0.91, degraded=True),
+    )
+
+    assert response.decision == "agent"
+
+
+@pytest.mark.anyio
+async def test_chat_api_reads_classifier_from_app_state():
+    classifier = AsyncClassifierClient(JanaClassification("FAQ", 0.91))
+    request = SimpleNamespace(app=SimpleNamespace(state=SimpleNamespace(classifier_client=classifier)))
+    service = ChatService(
+        memory_service=memory_service(),
+        router_service=RouterService(rag_tool=rag_service()),
+    )
+
+    response = await chat(
+        request,
+        ChatRequestBody(**chat_payload()),
+        chat_service=service,
+    )
+
+    assert response["decision"] == "rag"
+    assert classifier.calls == [
+        {"tenant_id": "tenant-a", "message": "What does the team plan cost?"}
+    ]

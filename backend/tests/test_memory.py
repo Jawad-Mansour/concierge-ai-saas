@@ -162,3 +162,12 @@ def test_memory_clear_removes_only_target_conversation():
             conversation_id="conversation-b",
         )
     ] == ["Keep this"]
+
+
+def test_memory_key_matches_tenant_erasure_pattern():
+    service, _clock = memory_service()
+
+    assert (
+        service._key("tenant-a", "conversation-a")
+        == "session:tenant:tenant-a:conversation:conversation-a:memory"
+    )

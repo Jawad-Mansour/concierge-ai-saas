@@ -83,6 +83,7 @@ class RouterRequest(BaseModel):
 class Classification:
     label: str
     confidence: float
+    degraded: bool = False
 
 
 @dataclass(frozen=True)
@@ -131,22 +132,29 @@ class RouterService:
         self.escalation_tool = escalation_tool
         self.direct_confidence_threshold = direct_confidence_threshold
 
-    def route(self, payload: RouterRequest | dict) -> RouterResult:
+    def route(
+        self,
+        payload: RouterRequest | dict,
+        *,
+        classification: Classification | object | None = None,
+    ) -> RouterResult:
         request = self._validate(payload)
-        label, confidence = self.classifier.classify(request.message)
-        classification = Classification(label=label, confidence=confidence)
+        classification = self._classification(request, classification)
 
-        if label == "spam" and confidence >= self.direct_confidence_threshold:
+        if (
+            classification.label == "spam"
+            and classification.confidence >= self.direct_confidence_threshold
+        ):
             return RouterResult(decision="drop", classification=classification)
 
-        if confidence < self.direct_confidence_threshold:
+        if classification.confidence < self.direct_confidence_threshold:
             return RouterResult(decision="agent", classification=classification)
 
-        if label in {"faq", "support"}:
+        if classification.label in {"faq", "support"}:
             return self._route_rag(request, classification)
-        if label in {"sales", "lead"}:
+        if classification.label in {"sales", "lead"}:
             return self._route_lead(request, classification)
-        if label in {"human_handoff", "escalate"}:
+        if classification.label in {"human_handoff", "escalate"}:
             return self._route_escalation(request, classification)
 
         return RouterResult(decision="agent", classification=classification)
@@ -245,3 +253,42 @@ class RouterService:
         if not request.tenant_id:
             raise TenantContextError("tenant context is required")
         return request
+
+    def _classification(
+        self,
+        request: RouterRequest,
+        classification: Classification | object | None,
+    ) -> Classification:
+        if classification is None:
+            label, confidence = self.classifier.classify(request.message)
+            return Classification(label=self._normalize_label(label), confidence=confidence)
+
+        raw_label = getattr(
+            classification,
+            "predicted_class",
+            getattr(classification, "label", None),
+        )
+        confidence = float(getattr(classification, "confidence", 0.0))
+        degraded = bool(getattr(classification, "degraded", False))
+        if degraded:
+            return Classification(label="unknown", confidence=0.0, degraded=True)
+        return Classification(
+            label=self._normalize_label(str(raw_label)),
+            confidence=confidence,
+            degraded=False,
+        )
+
+    def _normalize_label(self, label: str) -> str:
+        normalized = label.strip().lower()
+        return {
+            "spam": "spam",
+            "faq": "faq",
+            "account_ops": "agent",
+            "hard_question": "agent",
+            "unknown": "unknown",
+            "support": "support",
+            "sales": "sales",
+            "lead": "lead",
+            "human_handoff": "human_handoff",
+            "escalate": "escalate",
+        }.get(normalized, "unknown")

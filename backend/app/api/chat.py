@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from dataclasses import asdict
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.repositories.embedding_repo import EmbeddingChunk, InMemoryEmbeddingRepository
@@ -11,6 +11,12 @@ from app.services.chat_service import ChatService, ChatValidationError
 from app.services.memory_service import InMemoryMemoryStore, MemoryService
 from app.services.rag_service import RagService
 from app.services.router_service import RouterService
+
+try:
+    from app.middleware.guardrails import screen_input, screen_output
+except ImportError:
+    screen_input = None
+    screen_output = None
 
 
 router = APIRouter(prefix="/chat", tags=["chat"])
@@ -58,11 +64,69 @@ def build_chat_service() -> ChatService:
 
 
 @router.post("")
-def chat(
+async def chat(
+    request: Request,
     body: ChatRequestBody,
     chat_service: ChatService = Depends(build_chat_service),
 ):
     try:
-        return asdict(chat_service.handle_message(body.model_dump()))
+        classifier_client = getattr(request.app.state, "classifier_client", None)
+        guardrail_client = getattr(request.app.state, "guardrail_client", None)
+        classification = None
+        if classifier_client is not None:
+            classification = await classifier_client.classify(
+                tenant_id=body.tenant_id,
+                message=body.message,
+            )
+
+        if screen_input is not None and guardrail_client is not None:
+            decision, reply = await screen_input(
+                guardrail_client,
+                tenant_id=body.tenant_id,
+                message=body.message,
+                tenant_config=None,
+            )
+            if reply.escalate:
+                return {
+                    "conversation_id": body.conversation_id,
+                    "decision": "escalate",
+                    "message": reply.text or "I will flag this for human follow-up.",
+                    "trace_id": body.trace_id,
+                }
+            if decision.decision == "block":
+                return {
+                    "conversation_id": body.conversation_id,
+                    "decision": "blocked",
+                    "message": reply.text,
+                    "trace_id": body.trace_id,
+                }
+
+        response = chat_service.handle_message(
+            body.model_dump(),
+            classification=classification,
+        )
+
+        if screen_output is not None and guardrail_client is not None:
+            decision, reply = await screen_output(
+                guardrail_client,
+                tenant_id=body.tenant_id,
+                llm_response=response.message,
+                tenant_config=None,
+            )
+            if decision.decision == "block":
+                response = type(response)(
+                    conversation_id=response.conversation_id,
+                    decision="blocked",
+                    message=reply.text,
+                    trace_id=response.trace_id,
+                )
+            elif reply.text is not None:
+                response = type(response)(
+                    conversation_id=response.conversation_id,
+                    decision=response.decision,
+                    message=reply.text,
+                    trace_id=response.trace_id,
+                )
+        return asdict(response)
     except ChatValidationError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
