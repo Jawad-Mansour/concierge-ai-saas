@@ -3,6 +3,11 @@
 # so the CI security-gate runners and latency probe don't have to install
 # NeMo/Presidio. Eval deps MUST stay out of the sidecar image (Principle I).
 
+# setuptools>=64 ships the PEP 660 build_editable hook needed by `pip install -e`.
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "concierge-evals-security"
 version = "0.1.0"
@@ -14,6 +19,12 @@ dependencies = [
     "pyyaml==6.0.2",
     "numpy==1.26.4",
 ]
+
+# Flat layout: two standalone scripts, not a package. Declare them explicitly so
+# setuptools doesn't choke on "multiple top-level modules" auto-discovery (and so
+# the tests/ dir isn't installed as a top-level package).
+[tool.setuptools]
+py-modules = ["latency_probe", "red_team_tests"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
