@@ -21,7 +21,7 @@ from fastapi.responses import JSONResponse
 os.environ.setdefault("MODELSERVER_SERVICE_CREDENTIAL", "test-token")
 os.environ.setdefault("INFERENCE_TIMEOUT_MS", "200")
 
-from opentelemetry import trace  # noqa: E402
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor  # noqa: E402
 from opentelemetry.sdk.trace import TracerProvider  # noqa: E402
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor  # noqa: E402
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import (  # noqa: E402
@@ -55,15 +55,31 @@ class StubBackend:
 
 
 @pytest.fixture
-def span_exporter() -> Iterator[InMemorySpanExporter]:
+def _otel_capture() -> Iterator[tuple[TracerProvider, InMemorySpanExporter]]:
+    """Per-test tracer provider + in-memory exporter.
+
+    Shared by `make_app` (which instruments the app it builds) and
+    `span_exporter` (which reads the captured spans), so a request's server span
+    lands in the exporter the test asserts on. Both the instrumentation and the
+    classifier tracer use this provider EXPLICITLY: OTel's global
+    set_tracer_provider() is set-once per process, so relying on it makes span
+    capture order-dependent — only the first test in a session would see spans.
+    """
     exporter = InMemorySpanExporter()
     provider = TracerProvider()
     provider.add_span_processor(SimpleSpanProcessor(exporter))
-    trace.set_tracer_provider(provider)
-    # Refresh the tracer cached in classifier.py
-    classifier_module._tracer = trace.get_tracer("modelserver.classifier")
-    yield exporter
+    # Refresh the tracer cached in classifier.py. Vestigial today (classify()
+    # enriches the server span via get_current_span), but kept in sync defensively.
+    classifier_module._tracer = provider.get_tracer("modelserver.classifier")
+    yield provider, exporter
     exporter.clear()
+
+
+@pytest.fixture
+def span_exporter(
+    _otel_capture: tuple[TracerProvider, InMemorySpanExporter],
+) -> InMemorySpanExporter:
+    return _otel_capture[1]
 
 
 @pytest.fixture
@@ -80,8 +96,19 @@ def model_hash() -> Iterator[str]:
 
 
 @pytest.fixture
-def make_app(boot_credential: str, model_hash: str) -> Callable[..., FastAPI]:
-    """Build a FastAPI app with a stubbed backend and the auth dependency active."""
+def make_app(
+    boot_credential: str,
+    model_hash: str,
+    _otel_capture: tuple[TracerProvider, InMemorySpanExporter],
+) -> Callable[..., FastAPI]:
+    """Build a FastAPI app with a stubbed backend and the auth dependency active.
+
+    The app is instrumented (like production main.py) so `classify()` can enrich
+    the active FastAPI server span via trace.get_current_span(); without it there
+    is no recording span and the EvaluationSpan attrs would go nowhere (T026).
+    """
+    provider = _otel_capture[0]
+
     def _factory(
         backend: Any,
         *,
@@ -89,6 +116,7 @@ def make_app(boot_credential: str, model_hash: str) -> Callable[..., FastAPI]:
         timeout_s: float = 0.200,
     ) -> FastAPI:
         app = FastAPI()
+        FastAPIInstrumentor.instrument_app(app, tracer_provider=provider)
         app.state.backend = backend
         app.state.unknown_threshold = unknown_threshold
         app.state.inference_timeout_s = timeout_s
