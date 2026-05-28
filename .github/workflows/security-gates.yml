@@ -6,14 +6,127 @@ on:
   push:
     branches: ["**"]
   pull_request:
+    paths:
+      - "modelserver/**"
+      - "modelserver/artifacts/**"
+      - "backend/app/services/classifier_client.py"
+      - "guardrails/**"
+      - "evals/security/**"
+      - "backend/app/middleware/guardrails.py"
+      - "backend/app/middleware/redaction.py"
+      - "backend/app/services/guardrail_service.py"
+      - "backend/tests/test_guardrails.py"
+      - "backend/tests/test_redaction.py"
+      - ".github/workflows/security-gates.yml"
 
 jobs:
-  security-gates:
+  classifier-security-gates:
+    name: Classifier security gates (Principle VIII)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Security gates (placeholder)
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install modelserver dev deps
         run: |
-          echo "Security gates not yet implemented — Jana to implement."
-          echo "Exit 0 for now."
+          python -m pip install --upgrade pip
+          pip install -e 'modelserver/[dev]'
+
+      - name: Auth probe — every 401 body must be byte-identical (FR-004)
+        env:
+          MODELSERVER_SERVICE_CREDENTIAL: test-token
+        run: |
+          pytest -x modelserver/tests/test_auth.py
+
+      - name: Tenant-agnostic probe — same message, two tenants → identical body (SC-008)
+        env:
+          MODELSERVER_SERVICE_CREDENTIAL: test-token
+        run: |
+          pytest -x modelserver/tests/test_tenant_agnostic.py
+
+      - name: Hash-mismatch probe — bad artifact must exit non-zero (FR-008)
+        env:
+          MODELSERVER_SERVICE_CREDENTIAL: test-token
+        run: |
+          pytest -x modelserver/tests/test_hash_mismatch_boot.py
+
+  guardrails-security-gates:
+    name: Guardrails security gates (Principle VIII)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install guardrails dev deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e 'guardrails/[dev]'
+
+      - name: Auth probe — every 401 body must be byte-identical (FR-008)
+        env:
+          GUARDRAILS_SERVICE_CREDENTIAL: test-token
+        run: |
+          pytest -x guardrails/tests/test_auth.py
+
+      - name: Platform-rails probe — injection + cross-tenant cases
+        env:
+          GUARDRAILS_SERVICE_CREDENTIAL: test-token
+        run: |
+          pytest -x guardrails/tests/test_check_input_platform_rails.py
+
+      - name: Tenant-rails probe — off-topic, escalation, precedence
+        env:
+          GUARDRAILS_SERVICE_CREDENTIAL: test-token
+        run: |
+          pytest -x guardrails/tests/test_tenant_rails.py guardrails/tests/test_platform_precedence.py
+
+      - name: Fail-closed probe — every exception path collapses to block
+        env:
+          GUARDRAILS_SERVICE_CREDENTIAL: test-token
+        run: |
+          pytest -x guardrails/tests/test_fail_closed.py guardrails/tests/test_validation.py guardrails/tests/test_tenant_config_absent.py
+
+      - name: Redaction unit probe — placeholder + match_count semantics
+        env:
+          GUARDRAILS_SERVICE_CREDENTIAL: test-token
+        run: |
+          pytest -x guardrails/tests/test_redaction.py guardrails/tests/test_no_pii_in_spans.py guardrails/tests/test_span_attrs.py
+
+      - name: Build guardrails image + stand up sidecar
+        run: |
+          docker compose build guardrails
+          docker compose up -d vault vault-init guardrails otel-collector || docker compose up -d vault vault-init guardrails
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:8002/healthz; then break; fi
+            sleep 2
+          done
+
+      - name: Probe-string redaction against REAL sinks (Principle IX)
+        env:
+          GUARDRAILS_E2E: "1"
+          GUARDRAILS_URL: http://localhost:8002
+          GUARDRAILS_SERVICE_CREDENTIAL: test-token
+        run: |
+          pip install -e 'evals/security/'
+          pytest -x backend/tests/test_redaction.py
+
+      - name: Red-team probes — injection + cross-tenant + redaction
+        env:
+          GUARDRAILS_SERVICE_CREDENTIAL: test-token
+        run: |
+          python evals/security/red_team_tests.py --url http://localhost:8002 --token "$GUARDRAILS_SERVICE_CREDENTIAL" --probe-set evals/security/injection_cases.json
+          python evals/security/red_team_tests.py --url http://localhost:8002 --token "$GUARDRAILS_SERVICE_CREDENTIAL" --probe-set evals/security/cross_tenant_cases.json
+
+      - name: Latency budget — p95 < 100 ms
+        env:
+          GUARDRAILS_SERVICE_CREDENTIAL: test-token
+        run: |
+          python evals/security/latency_probe.py --url http://localhost:8002 --token "$GUARDRAILS_SERVICE_CREDENTIAL" --concurrency 16 --requests 200 --p95-budget-ms 100
