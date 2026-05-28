@@ -173,9 +173,15 @@ gets rejected. CORS is defense-in-depth, not the boundary.
 
 ## Phase 6 — Admin UX (Streamlit)
 
-- [ ] `streamlit_app.py` — overwrite placeholder; sidebar nav
+## Backend APIs (done)
+- [x] GET /admin/widget-config — returns tenant widget config (404 if none)
+- [x] PUT /admin/widget-config — create or update widget config
+- [x] GET /admin/widget-config/embed-snippet — returns embed script tag
+- [x] Role-gated: tenant_admin only, uses get_tenant_db RLS dependency
+
+- [x] `streamlit_app.py` — overwrite placeholder (backend APIs ready)
 - [ ] `pages/tenant_settings.py` — basic info, allowed_origins editor
-- [ ] `pages/widget_config.py` — theme, greeting, embed snippet copy button
+- [x] `pages/widget_config.py` — GET/PUT widget config, embed snippet
 - [ ] `pages/guardrails_config.py` — tenant rails (topics, persona, refusal tone) — coordinate with Jana
 - [ ] Live update without restart (read config from DB on each render)
 - [ ] Auth: only tenant_admin role can access (use fastapi-users session — coordinate with Mohammad)
@@ -264,3 +270,5 @@ gets rejected. CORS is defense-in-depth, not the boundary.
 - Widget auth backend complete: POST /widget/token, origin validation,
   JWT signing via Mohammad's auth_service.issue_widget_token(). RLS bypass
   migration 003 for pre-auth widget_id lookup. 4/4 tests pass.
+- Admin backend: 3 widget config endpoints, all passing. GET/PUT/embed-snippet.
+  RLS via get_tenant_db, role check, UUID cast fix for psycopg2.
