@@ -43,7 +43,7 @@ def _load_service_credential(*, vault_path: str, env_var: str) -> str:
     env_var:    CI/test escape hatch; avoids requiring a live Vault locally.
 
     Fails fast on any error — the backend MUST NOT serve requests without valid
-    outbound credentials (Constitution Principle V: secrets via Vault only).
+    outbound credentials (Constitution Principle V: secrets via Vault only)."""
 
     env_cred = os.environ.get(env_var)
     if env_cred:
