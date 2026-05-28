@@ -12,8 +12,8 @@ config-hash check (Principle II) protects both code paths.
 from __future__ import annotations
 
 import re
-from pathlib import Path
 from collections.abc import Iterable
+from pathlib import Path
 
 import yaml
 

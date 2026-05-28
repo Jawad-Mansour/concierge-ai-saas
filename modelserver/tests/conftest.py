@@ -118,7 +118,10 @@ def make_app(boot_credential: str, model_hash: str) -> Callable[..., FastAPI]:
             errors = [
                 {
                     **e,
-                    "ctx": {k: str(v) if isinstance(v, Exception) else v for k, v in e["ctx"].items()},
+                    "ctx": {
+                        k: str(v) if isinstance(v, Exception) else v
+                        for k, v in e["ctx"].items()
+                    },
                 }
                 if "ctx" in e else e
                 for e in exc.errors()
