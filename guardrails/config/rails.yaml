@@ -1,1 +1,38 @@
 # Owner: Jana
+# NeMo Guardrails composition entrypoint. Loaded once at process boot.
+# Hash-pinned into app/version.py:RAILS_CONFIG_HASH at image build time.
+
+models: []
+
+rails:
+  input:
+    flows:
+      - prompt_injection_check
+      - jailbreak_check
+      - cross_tenant_check
+  output:
+    flows:
+      - cross_tenant_check
+      - jailbreak_check
+
+prompts: []
+
+# Pattern definitions used by validators.py when NeMo's flow engine is not
+# loaded (local dev / test). The patterns are reused by the production NeMo
+# flows above so behavior is identical across modes.
+patterns:
+  prompt_injection:
+    - "(?i)ignore (the |all )?(previous|prior|above) (instructions|prompt|messages)"
+    - "(?i)disregard (the |all )?(previous|prior|above) (instructions|prompt)"
+    - "(?i)you are now (in )?(developer|admin|debug|jailbreak) mode"
+    - "(?i)reveal (your |the )?(system )?prompt"
+    - "(?i)show me (your |the )?system prompt"
+  jailbreak:
+    - "(?i)\\bDAN\\b"  # do-anything-now
+    - "(?i)pretend (you are|to be) (an )?(alter ego|evil|unrestricted|uncensored)"
+    - "(?i)hypothetically.*(no rules|no restrictions|no filters)"
+    - "(?i)base64:[A-Za-z0-9+/=]{20,}"  # encoded payload smuggling
+  cross_tenant:
+    - "(?i)the other (client|tenant|customer|company)"
+    - "(?i)what (did|does) (another|the other) (tenant|client|customer) (say|ask)"
+    - "(?i)show me (data|messages|prompts) from (other|another) tenant"

@@ -1,1 +1,18 @@
 # Owner: Jana
+# Cross-tenant reference detection. Matches:
+#  - explicit naming of another tenant ("ACME Corp", any literal in `tenant_names`)
+#  - semantic references ("the other client", "another tenant", "the previous customer")
+#  - cross-boundary system-prompt extraction attempts
+
+patterns:
+  semantic:
+    - "(?i)the other (client|tenant|customer|company)"
+    - "(?i)another (client|tenant|customer|company)"
+    - "(?i)the previous (client|tenant|customer)"
+    - "(?i)what (did|does) (another|the other) (tenant|client|customer) (say|ask)"
+    - "(?i)show me (data|messages|prompts|conversations) from (other|another) tenant"
+    - "(?i)(reveal|show|leak) (their|other tenants?') (system prompt|config|data)"
+
+# Placeholder for tenant-literal blocking; populated at deploy time by an
+# operator-controlled allowlist (no per-request override).
+tenant_names: []

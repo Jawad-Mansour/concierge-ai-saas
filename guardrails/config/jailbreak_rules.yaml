@@ -1,1 +1,20 @@
 # Owner: Jana
+# Known jailbreak frames. Each entry names a frame and lists detection patterns.
+
+frames:
+  - name: DAN
+    patterns:
+      - "(?i)\\bDAN\\b"
+      - "(?i)do anything now"
+  - name: alter_ego
+    patterns:
+      - "(?i)pretend (you are|to be) (an )?(alter ego|different ai|evil twin)"
+      - "(?i)act as (an )?(unrestricted|uncensored|evil) (ai|assistant)"
+  - name: hypothetical_evil
+    patterns:
+      - "(?i)hypothetically.*(no rules|no restrictions|no filters|no guidelines)"
+      - "(?i)imagine.*(world|scenario) where.*no (rules|laws|restrictions)"
+  - name: encoded_payload
+    patterns:
+      - "(?i)base64:[A-Za-z0-9+/=]{20,}"
+      - "(?i)decode this.*:.*[A-Za-z0-9+/=]{40,}"

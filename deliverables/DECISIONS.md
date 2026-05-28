@@ -97,6 +97,24 @@ Cost control and injection resistance. The cap is set at the platform layer (not
 **Why this**:
 The vast majority of widget queries are FAQ-style (`rag_search`) or lead-capture. Routing these through a ~2 ms ONNX classifier instead of a 500 ms LLM call reduces per-message cost by an order of magnitude. The classifier eval gate (macro-F1 ≥ threshold) in CI prevents model drift from silently degrading routing quality.
 
+### ADR-007.a: Classifier numeric decisions (Principle IV)
+
+The classifier slice (`specs/001-classifier-service/`) is bound to a fixed numeric posture. Each row below cites a reproducible source.
+
+| Decision | Number | Source |
+|----------|--------|--------|
+| Held-out macro-F1 of deployed model | filled by `evals/classifier/eval_classifier.py` at PR time; gated by `evals/classifier/eval_thresholds.yaml#macro_f1_min` | `evals/classifier/eval_classifier.py` |
+| Per-class precision/recall | filled by `eval_classifier.py` JSON output | Same |
+| p95 latency budget | 50 ms (typical messages) | `evals/classifier/latency_probe.py` |
+| p99 latency budget | 100 ms (typical messages) | `evals/classifier/latency_probe.py` |
+| Cold-start budget | < 5 s | `evals/classifier/coldstart_probe.py` |
+| Inference hard timeout | 200 ms | `modelserver/app/main.py::INFERENCE_TIMEOUT_MS` (env-overridable), exercised by `modelserver/tests/test_timeout.py` |
+| UNKNOWN-escalation threshold | filled by `modelserver/training/evaluate_models.py`; recorded in `modelserver/artifacts/model_card.md#unknown_threshold` | Bake-off harness |
+| Bake-off winner justification | row in `deliverables/EVALS.md` | `modelserver/training/evaluate_models.py` |
+| Container image size | < 500 MB | CI `image-size` job for `modelserver` |
+
+Bake-off summary (four-metric, Principle III): the latest run of `modelserver/training/evaluate_models.py` writes the comparison table into `deliverables/EVALS.md`. Once a winner is committed, the row's link back here is updated in the same PR.
+
 ---
 
 ## ADR-008: Tenant Manager read prohibition (structural, not procedural)
@@ -149,3 +167,25 @@ The `email_login_lookup` policy solves an analogous problem for the login flow: 
 
 **Why this**:
 Vault provides rotation, audit logging, and a single source of truth for all secrets. The `get-or-generate` pattern in `seed.sh` means signing keys are stable across restarts (not regenerated on each `docker compose up`). The backend's `_load_database_url()` function checks `DATABASE_URL` env var first — this allows CI to skip Vault without a running server.
+
+---
+
+## ADR-012: Guardrails sidecar numeric decisions (Principle IV)
+
+The guardrails slice (`specs/002-guardrails-sidecar/`) is bound to a fixed numeric posture. Each row below cites a reproducible source and an eval script.
+
+| Decision | Number | Source |
+|----------|--------|--------|
+| Sidecar p95 latency (input + output) | 100 ms | `evals/security/latency_probe.py --concurrency 16 --requests 1000` |
+| Sidecar p99 latency (input + output) | 200 ms | Same |
+| Platform-rail block recall on red-team probes | ≥ recorded per category | `evals/security/red_team_tests.py --probe-set evals/security/injection_cases.json` and `--probe-set evals/security/cross_tenant_cases.json` |
+| Platform-rail false-positive rate on benign controls | ≤ recorded threshold | Same harness; benign-control entries in the same probe files |
+| PII redaction recall (per recognizer) | ≥ recorded threshold | `backend/tests/test_redaction.py` (real-sinks probe-string scan, Principle IX) |
+| PII redaction precision (per recognizer) | ≥ recorded threshold | Same |
+| Container image size | < 500 MB | CI `image-size` job for the `guardrails` image |
+
+Methodology notes:
+- The latency probe runs against a 50/50 mix of `/check/input` and `/check/output` calls covering benign, hostile, and PII-bearing messages so the recorded p95 mirrors production rather than a single hot path.
+- Redaction recall/precision are recorded per recognizer in DECISIONS.md once `backend/tests/test_redaction.py` ships its first labeled run; the placeholders above are filled in the PR that lands T054.
+
+The `rails_version` (12-hex SHA-256 truncation of `guardrails/config/*.yaml`) is emitted on every span so a production block decision is reproducible to a specific committed ruleset (Principle II/VII).
