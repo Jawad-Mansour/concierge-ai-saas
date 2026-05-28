@@ -1,0 +1,10 @@
+{"message": "What are your business hours?", "label": "FAQ"}
+{"message": "How can I reset my password?", "label": "FAQ"}
+{"message": "BUY CHEAP MEDS NOW", "label": "SPAM"}
+{"message": "Click here to win a prize http://spammy.example", "label": "SPAM"}
+{"message": "I'd like to talk to sales, call me at +1-555-0123", "label": "ACCOUNT_OPS"}
+{"message": "Can I upgrade my plan?", "label": "ACCOUNT_OPS"}
+{"message": "Compare the team and enterprise plans on SLA + EU data residency", "label": "HARD_QUESTION"}
+{"message": "Does your API handle bulk inserts with idempotency keys?", "label": "HARD_QUESTION"}
+{"message": "hey", "label": "UNKNOWN"}
+{"message": "???", "label": "UNKNOWN"}

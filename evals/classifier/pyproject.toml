@@ -1,0 +1,20 @@
+# Owner: Jana
+# Standalone eval package — installable independently of the modelserver
+# stack so the CI macro-F1 gate does not have to install the full serving
+# image. Eval deps MUST stay out of the serving image (Principle I).
+
+[project]
+name = "concierge-evals-classifier"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "scikit-learn==1.5.2",
+    "onnxruntime==1.18.1",
+    "joblib==1.4.2",
+    "numpy==1.26.4",
+    "pyyaml==6.0.2",
+    "pytest==8.3.3",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
