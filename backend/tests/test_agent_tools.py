@@ -8,6 +8,9 @@ from app.repositories.conversation_repo import (
 from app.repositories.lead_repo import InMemoryLeadRepository, LeadCreate
 from app.services.agent_service import (
     AgentService,
+    AgentConfigurationError,
+    AgentPlannerError,
+    AnthropicAgentPlanner,
     AgentValidationError,
     ToolPlan,
     ToolRegistry,
@@ -467,3 +470,52 @@ def test_agent_heuristic_planner_uses_allowed_tools_only():
 
     assert [call.tool_name for call in result.tool_calls] == ["escalate"]
     assert result.stopped_reason == "final"
+
+
+def test_anthropic_planner_reads_key_from_environment(monkeypatch):
+    calls = []
+
+    def fake_post_json(url, payload, headers, timeout_seconds):
+        calls.append((url, payload, headers, timeout_seconds))
+        return {
+            "content": [
+                {
+                    "text": (
+                        '{"tool_name": "rag_search", "reason": "answer from tenant docs", '
+                        '"final_response": null}'
+                    )
+                }
+            ]
+        }
+
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    monkeypatch.setenv("ANTHROPIC_MODEL", "test-model")
+    planner = AnthropicAgentPlanner(post_json=fake_post_json)
+
+    plan = planner.plan(request=agent_payload_model(), tool_calls=[])
+
+    assert plan.tool_name == "rag_search"
+    assert calls[0][1]["model"] == "test-model"
+    assert calls[0][2]["x-api-key"] == "test-key"
+    assert "tenant-a" not in calls[0][1]["messages"][0]["content"]
+
+
+def test_anthropic_planner_requires_api_key(monkeypatch):
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+
+    with pytest.raises(AgentConfigurationError):
+        AnthropicAgentPlanner()
+
+
+def test_anthropic_planner_rejects_invalid_response(monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    planner = AnthropicAgentPlanner(post_json=lambda *_args: {"content": [{"text": "nope"}]})
+
+    with pytest.raises(AgentPlannerError):
+        planner.plan(request=agent_payload_model(), tool_calls=[])
+
+
+def agent_payload_model():
+    from app.services.agent_service import AgentRequest
+
+    return AgentRequest.model_validate(agent_payload())
