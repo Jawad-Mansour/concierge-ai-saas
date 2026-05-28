@@ -266,3 +266,11 @@ def test_chat_service_factory_ignores_placeholder_anthropic_key(monkeypatch):
     service = chat_api.build_chat_service()
 
     assert isinstance(service.agent_service.planner, HeuristicAgentPlanner)
+
+
+def test_chat_router_is_mounted_for_ui_integration():
+    from app.main import app
+
+    paths = {route.path for route in app.routes}
+
+    assert "/chat" in paths
