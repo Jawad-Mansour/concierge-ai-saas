@@ -18,7 +18,7 @@ from fastapi.responses import JSONResponse
 
 os.environ.setdefault("GUARDRAILS_SERVICE_CREDENTIAL", "test-token")
 
-from opentelemetry import trace  # noqa: E402
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor  # noqa: E402
 from opentelemetry.sdk.trace import TracerProvider  # noqa: E402
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor  # noqa: E402
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import (  # noqa: E402
@@ -36,13 +36,24 @@ from app.schemas import (  # noqa: E402
 
 
 @pytest.fixture
-def span_exporter() -> Iterator[InMemorySpanExporter]:
+def span_exporter(app: FastAPI) -> Iterator[InMemorySpanExporter]:
+    """Wire an in-memory exporter to the app under test.
+
+    `evaluate()` enriches the active FastAPI server span via
+    `trace.get_current_span()`, so the app must be instrumented for a parent
+    span to exist at all. We instrument *this* app and point the validators
+    tracer at the same provider, both passed explicitly: OTel's global
+    `set_tracer_provider()` is set-once per process, so relying on it makes span
+    capture order-dependent — only the first test in a session would ever see
+    its spans (the rest get the "Overriding ... is not allowed" no-op).
+    """
     exporter = InMemorySpanExporter()
     provider = TracerProvider()
     provider.add_span_processor(SimpleSpanProcessor(exporter))
-    trace.set_tracer_provider(provider)
-    validators_module._tracer = trace.get_tracer("guardrails.validators")
+    FastAPIInstrumentor.instrument_app(app, tracer_provider=provider)
+    validators_module._tracer = provider.get_tracer("guardrails.validators")
     yield exporter
+    FastAPIInstrumentor.uninstrument_app(app)
     exporter.clear()
 
 
