@@ -3,10 +3,16 @@ from types import SimpleNamespace
 
 import pytest
 
+import app.api.chat as chat_api
 from app.api.chat import ChatRequestBody, chat
 from app.repositories.embedding_repo import EmbeddingChunk, InMemoryEmbeddingRepository
 from app.repositories.lead_repo import InMemoryLeadRepository
-from app.services.agent_service import AgentService, ToolPlan, ToolRegistry
+from app.services.agent_service import (
+    AgentService,
+    HeuristicAgentPlanner,
+    ToolPlan,
+    ToolRegistry,
+)
 from app.services.chat_service import ChatService, ChatValidationError
 from app.services.lead_service import LeadService
 from app.services.memory_service import InMemoryMemoryStore, MemoryService
@@ -189,3 +195,82 @@ async def test_chat_api_reads_classifier_from_app_state():
     assert classifier.calls == [
         {"tenant_id": "tenant-a", "message": "What does the team plan cost?"}
     ]
+
+
+def test_chat_service_factory_uses_redis_memory_store_when_available(monkeypatch):
+    calls = []
+
+    class FakeRedisMemoryStore:
+        def __init__(self):
+            calls.append("redis")
+
+        def append(self, **kwargs):
+            return None
+
+        def get(self, **kwargs):
+            return []
+
+        def clear(self, **kwargs):
+            return None
+
+    monkeypatch.setattr(chat_api, "RedisMemoryStore", FakeRedisMemoryStore)
+
+    service = chat_api.build_chat_service()
+
+    assert isinstance(service.memory_service.store, FakeRedisMemoryStore)
+    assert calls == ["redis"]
+
+
+def test_chat_service_factory_falls_back_to_in_memory_when_redis_unavailable(monkeypatch):
+    class BrokenRedisMemoryStore:
+        def __init__(self):
+            raise RuntimeError("redis unavailable")
+
+    monkeypatch.setattr(chat_api, "RedisMemoryStore", BrokenRedisMemoryStore)
+
+    service = chat_api.build_chat_service()
+
+    assert isinstance(service.memory_service.store, InMemoryMemoryStore)
+
+
+def test_chat_service_factory_uses_anthropic_planner_when_key_is_configured(monkeypatch):
+    created = []
+
+    class FakeAnthropicPlanner:
+        def __init__(self):
+            created.append("anthropic")
+
+        def plan(self, *, request, tool_calls):
+            return ToolPlan(None, "fake anthropic", final_response="Anthropic handled it.")
+
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-real-looking-key")
+    monkeypatch.setattr(chat_api, "AnthropicAgentPlanner", FakeAnthropicPlanner)
+
+    service = chat_api.build_chat_service()
+
+    assert created == ["anthropic"]
+    assert isinstance(service.agent_service.planner, FakeAnthropicPlanner)
+
+
+def test_chat_service_factory_uses_heuristic_planner_without_key(monkeypatch):
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+
+    service = chat_api.build_chat_service()
+
+    assert isinstance(service.agent_service.planner, HeuristicAgentPlanner)
+
+
+def test_chat_service_factory_ignores_placeholder_anthropic_key(monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "replace-me")
+
+    service = chat_api.build_chat_service()
+
+    assert isinstance(service.agent_service.planner, HeuristicAgentPlanner)
+
+
+def test_chat_router_is_mounted_for_ui_integration():
+    from app.main import app
+
+    paths = {route.path for route in app.routes}
+
+    assert "/chat" in paths

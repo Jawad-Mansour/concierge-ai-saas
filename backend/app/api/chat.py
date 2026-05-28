@@ -1,14 +1,23 @@
 # Owner: Ali
 from __future__ import annotations
 
+import os
 from dataclasses import asdict
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.repositories.embedding_repo import EmbeddingChunk, InMemoryEmbeddingRepository
+from app.repositories.lead_repo import InMemoryLeadRepository
+from app.services.agent_service import (
+    AgentService,
+    AnthropicAgentPlanner,
+    HeuristicAgentPlanner,
+    ToolRegistry,
+)
 from app.services.chat_service import ChatService, ChatValidationError
-from app.services.memory_service import InMemoryMemoryStore, MemoryService
+from app.services.lead_service import LeadService
+from app.services.memory_service import InMemoryMemoryStore, MemoryService, RedisMemoryStore
 from app.services.rag_service import RagService
 from app.services.router_service import RouterService
 
@@ -56,11 +65,40 @@ def build_chat_service() -> ChatService:
             ]
         )
     )
-    memory_service = MemoryService(InMemoryMemoryStore())
+    lead_service = LeadService(repository=InMemoryLeadRepository())
+    memory_service = MemoryService(build_memory_store())
     return ChatService(
         memory_service=memory_service,
-        router_service=RouterService(rag_tool=rag_service),
+        router_service=RouterService(rag_tool=rag_service, lead_tool=lead_service),
+        agent_service=build_agent_service(rag_service=rag_service, lead_service=lead_service),
     )
+
+
+def build_memory_store():
+    try:
+        return RedisMemoryStore()
+    except RuntimeError:
+        return InMemoryMemoryStore()
+
+
+def build_agent_service(*, rag_service: RagService, lead_service: LeadService) -> AgentService:
+    planner = (
+        AnthropicAgentPlanner()
+        if _has_anthropic_key()
+        else HeuristicAgentPlanner()
+    )
+    return AgentService(
+        tool_registry=ToolRegistry(
+            rag_tool=rag_service,
+            lead_tool=lead_service,
+        ),
+        planner=planner,
+    )
+
+
+def _has_anthropic_key() -> bool:
+    key = os.getenv("ANTHROPIC_API_KEY", "").strip()
+    return bool(key and key != "replace-me")
 
 
 @router.post("")
