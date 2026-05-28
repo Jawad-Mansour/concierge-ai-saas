@@ -7,7 +7,6 @@ per simulated downstream call, without touching a real OTLP endpoint.
 from __future__ import annotations
 
 import pytest
-from opentelemetry import metrics as otel_metrics
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import InMemoryMetricReader
 
@@ -16,11 +15,16 @@ import app.utils.metrics as metrics_mod
 
 @pytest.fixture()
 def reader():
-    """Wire an InMemoryMetricReader directly — bypasses init() so tests run offline."""
+    """Wire an InMemoryMetricReader directly — bypasses init() so tests run offline.
+
+    The meter is pulled from the local provider rather than the global one:
+    OTel's global MeterProvider can only be set once per process, so a per-test
+    set_meter_provider() is silently ignored after the first test and the
+    reader would never be wired to the meter record_downstream writes to.
+    """
     r = InMemoryMetricReader()
     provider = MeterProvider(metric_readers=[r])
-    otel_metrics.set_meter_provider(provider)
-    meter = otel_metrics.get_meter("backend")
+    meter = provider.get_meter("backend")
     metrics_mod._calls = meter.create_counter(
         "concierge.backend.downstream.calls", unit="1"
     )
