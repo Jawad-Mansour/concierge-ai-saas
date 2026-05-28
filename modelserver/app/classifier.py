@@ -6,6 +6,7 @@ in a single try/except that translates timeouts and exceptions into the canonica
 `(UNKNOWN, 0.0)` response with `classifier.degraded=true` on the span.
 `0.0` is reserved exclusively for this path (data-model.md §Confidence values).
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -47,7 +48,7 @@ async def classify(
         if predicted_class != "UNKNOWN" and raw_confidence < unknown_threshold:
             predicted_class = "UNKNOWN"
         confidence = float(raw_confidence)
-    except asyncio.TimeoutError:
+    except TimeoutError:
         degraded = True
         predicted_class = "UNKNOWN"
         confidence = 0.0

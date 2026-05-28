@@ -6,6 +6,7 @@ the on-disk SHA-256 differs from what the card declares, or the declared
 artifact extension does not match the declared `artifact_type` (Principle II /
 spec FR-007 / FR-008).
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -98,7 +99,9 @@ def load(artifacts_dir: Path | None = None) -> LoadedArtifact:
 
     artifact_type = card["artifact_type"]
     if artifact_type not in ARTIFACT_TYPES:
-        logger.error(_structured("model_card_invalid", reason="unknown artifact_type", value=artifact_type))
+        logger.error(
+            _structured("model_card_invalid", reason="unknown artifact_type", value=artifact_type)
+        )  # noqa: E501
         sys.exit(1)
 
     artifact_path = artifacts_dir / card["artifact_filename"]
@@ -150,7 +153,9 @@ def load(artifacts_dir: Path | None = None) -> LoadedArtifact:
     else:  # hosted_llm_prompt
         hosted_id = card.get("hosted_model_identifier")
         if not hosted_id:
-            logger.error(_structured("model_card_invalid", reason="hosted_model_identifier missing"))
+            logger.error(
+                _structured("model_card_invalid", reason="hosted_model_identifier missing")
+            )  # noqa: E501
             sys.exit(1)
         backend = HostedLlmBackend(artifact_path, hosted_id)
 

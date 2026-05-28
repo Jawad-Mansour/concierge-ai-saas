@@ -8,6 +8,7 @@ Every test installs:
   - a known `version.MODEL_HASH` so PredictResponse passes 12-hex validation,
   - an in-memory OTel span exporter so US3 tests can assert attributes.
 """
+
 from __future__ import annotations
 
 import os
@@ -20,18 +21,17 @@ from fastapi import FastAPI
 os.environ.setdefault("MODELSERVER_SERVICE_CREDENTIAL", "test-token")
 os.environ.setdefault("INFERENCE_TIMEOUT_MS", "200")
 
-from app import classifier as classifier_module  # noqa: E402
-from app import deps as deps_module  # noqa: E402
-from app import telemetry as telemetry_module  # noqa: E402
-from app import version  # noqa: E402
-from app.schemas import IntentClass  # noqa: E402
-
 from opentelemetry import trace  # noqa: E402
 from opentelemetry.sdk.trace import TracerProvider  # noqa: E402
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor  # noqa: E402
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import (  # noqa: E402
     InMemorySpanExporter,
 )
+
+from app import classifier as classifier_module  # noqa: E402
+from app import deps as deps_module  # noqa: E402
+from app import version  # noqa: E402
+from app.schemas import IntentClass  # noqa: E402
 
 
 class StubBackend:
@@ -111,9 +111,7 @@ def make_app(boot_credential: str, model_hash: str) -> Callable[..., FastAPI]:
         @app.exception_handler(HTTPException)
         async def _401(_: Request, exc: HTTPException) -> JSONResponse:
             if exc.status_code == 401:
-                return JSONResponse(
-                    status_code=401, content=UnauthenticatedResponse().model_dump()
-                )
+                return JSONResponse(status_code=401, content=UnauthenticatedResponse().model_dump())
             return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
 
         @app.exception_handler(RequestValidationError)

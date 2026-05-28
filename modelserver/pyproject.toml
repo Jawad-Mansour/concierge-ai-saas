@@ -13,9 +13,10 @@ dependencies = [
     "scikit-learn==1.5.2",
     "numpy==1.26.4",
     "joblib==1.4.2",
-    "opentelemetry-sdk==1.27.0",
-    "opentelemetry-instrumentation-fastapi==0.48b0",
-    "opentelemetry-exporter-otlp==1.27.0",
+    "opentelemetry-sdk>=1.29.0",
+    "opentelemetry-instrumentation-fastapi>=0.50b0",
+    "opentelemetry-exporter-otlp>=1.29.0",
+    "setuptools>=69.0",
 ]
 
 [project.optional-dependencies]

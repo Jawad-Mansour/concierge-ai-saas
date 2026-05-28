@@ -1,6 +1,7 @@
 # Owner: Jana
 """T030 — schema validation per FR-005. Malformed requests return 422 with no
 partial prediction body."""
+
 from __future__ import annotations
 
 import pytest

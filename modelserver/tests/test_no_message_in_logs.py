@@ -1,5 +1,6 @@
 # Owner: Jana
 """T027 — message text never appears in logs or span attributes (Principle IX hygiene)."""
+
 from __future__ import annotations
 
 import logging
@@ -11,9 +12,7 @@ from .conftest import StubBackend
 CANARY = "CANARY_REDACT_CHECK_99731"
 
 
-def test_message_never_appears_in_logs_or_spans(
-    make_app, boot_credential, span_exporter, caplog
-):
+def test_message_never_appears_in_logs_or_spans(make_app, boot_credential, span_exporter, caplog):
     app = make_app(StubBackend({CANARY: ("HARD_QUESTION", 0.6)}))
     client = TestClient(app)
 

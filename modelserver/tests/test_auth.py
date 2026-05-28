@@ -1,6 +1,7 @@
 # Owner: Jana
 """T023 — auth probe per FR-004. The 401 body must be byte-identical across
 missing and malformed credentials."""
+
 from __future__ import annotations
 
 from fastapi.testclient import TestClient

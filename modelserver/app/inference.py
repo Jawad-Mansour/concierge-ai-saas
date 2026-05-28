@@ -5,6 +5,7 @@ The orchestrator in `classifier.py` only knows about the `InferenceBackend`
 Protocol — concrete backends are selected once at boot from `model_card.md`
 and held on `app.state.backend`. The hot path never branches on backend type.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -55,7 +56,7 @@ class OnnxBackend:
         # Expected output: logits or probabilities of shape (1, 5).
         scores = np.asarray(outputs[0][0], dtype=np.float64)
         # Softmax if the model returns logits, identity if it already returns probabilities.
-        if not (0.0 <= float(scores.min()) and float(scores.sum()) <= 1.0 + 1e-3):
+        if not (float(scores.min()) >= 0.0 and float(scores.sum()) <= 1.0 + 1e-3):
             exp = np.exp(scores - scores.max())
             scores = exp / exp.sum()
         idx = int(np.argmax(scores))
@@ -84,9 +85,7 @@ class SklearnBackend:
         label = self._class_order[idx]
         if label not in CLASS_NAMES:
             # Shipped artifact does not match the closed vocabulary — fail loud.
-            raise RuntimeError(
-                f"SklearnBackend produced class {label!r} not in {CLASS_NAMES!r}"
-            )
+            raise RuntimeError(f"SklearnBackend produced class {label!r} not in {CLASS_NAMES!r}")
         return label, float(probs[idx])  # type: ignore[return-value]
 
 

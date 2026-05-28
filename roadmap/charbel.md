@@ -78,6 +78,43 @@ PR link or commit SHA in the trailing parenthesis.
       with RLS policies active.
 - [x] Full stack validated: 12/12 services healthy after all fixes.
 
+## Phase 2.2 — Unblock Jana: feat/classifier-implementation
+
+- [x] Checked out Jana's branch and got her OK to push fixes
+- [x] Rebased onto main (already up to date)
+- [x] Ran ruff --fix from backend venv against modelserver/
+      (ruff not in modelserver dev deps, had to use backend venv)
+- [x] Auto-fixed: UP041 (asyncio.TimeoutError → TimeoutError),
+      SIM300 (yoda condition), I001 (import ordering),
+      F401 (unused import)
+- [x] Manual noqa suppressions added for E501 (intentionally long
+      lines in model_loader.py, test_hash_mismatch_boot.py,
+      evaluate_models.py, train_dl.ipynb) and E402 (structural
+      module-level import in evaluate_models.py)
+- [x] ruff check ../modelserver → All checks passed
+- [x] Diagnosed modelserver unhealthy: pkg_resources missing —
+      opentelemetry-instrumentation-fastapi==0.48b0 uses
+      pkg_resources which was removed in Python 3.12
+- [x] Fixed: bumped opentelemetry-sdk/instrumentation/exporter
+      to >=1.29.0 / >=0.50b0, added setuptools>=69.0,
+      wrapped FastAPIInstrumentor import in try/except
+- [x] Regenerated modelserver/uv.lock after dep changes
+- [x] Diagnosed modelserver still unhealthy after opentelemetry fix:
+      artifact_missing — classifier.joblib not in repo (gitignored,
+      Jana hasn't trained final model yet). model_card.md confirms
+      placeholder SHA. This is expected on an incomplete branch.
+- [x] Decision: do not add DEV_MODE stub — modelserver is
+      intentionally incomplete. Smoke test will pass once Jana
+      commits the trained artifact and updates model_card.md SHA.
+- [x] Pushed lint + opentelemetry fixes to feat/classifier-implementation
+
+## What's left for Jana on this branch
+- Train classifier, export to joblib
+- Update model_card.md with real SHA-256
+- Commit classifier.joblib (remove from .gitignore for this file
+  or use git add -f)
+- Smoke test will go green after artifact is present
+
 ## Phase 3 — CI pipeline skeleton
 
 Goal: pipeline green before there's anything real to gate. Owners
@@ -195,3 +232,9 @@ gets rejected. CORS is defense-in-depth, not the boundary.
   vs vault:8200). Added alembic.ini + alembic/ to backend Dockerfile.
   Rebuilt postgres image — widget_configs stub confirmed in fresh DB.
   Full stack 12/12 healthy.
+- Worked on Jana's feat/classifier-implementation branch with her OK.
+  Fixed all lint errors (ruff noqa suppressions + auto-fixes). Fixed
+  opentelemetry pkg_resources crash (Python 3.12 incompatibility) by
+  bumping to >=1.29.0. Modelserver still unhealthy — expected, artifact
+  missing because Jana hasn't trained final model yet. Pushed fixes,
+  documented what Jana needs to do to finish the branch.
