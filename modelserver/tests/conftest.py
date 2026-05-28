@@ -9,8 +9,6 @@ Every test installs:
   - an in-memory OTel span exporter so US3 tests can assert attributes.
 """
 
-from __future__ import annotations
-
 import os
 from collections.abc import Callable, Iterator
 from typing import Any
