@@ -119,7 +119,10 @@ def create_app() -> FastAPI:
     @app.exception_handler(RequestValidationError)
     async def _422(_: Request, exc: RequestValidationError) -> JSONResponse:
         errors = [
-            {**e, "ctx": {k: str(v) if isinstance(v, Exception) else v for k, v in e["ctx"].items()}}
+            {
+                **e,
+                "ctx": {k: str(v) if isinstance(v, Exception) else v for k, v in e["ctx"].items()},
+            }
             if "ctx" in e else e
             for e in exc.errors()
         ]

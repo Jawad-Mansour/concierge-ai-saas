@@ -32,7 +32,12 @@ from app import classifier as classifier_module  # noqa: E402
 from app import deps as deps_module  # noqa: E402
 from app import version  # noqa: E402
 from app.deps import require_service_credential  # noqa: E402
-from app.schemas import IntentClass, PredictRequest, PredictResponse, UnauthenticatedResponse  # noqa: E402
+from app.schemas import (  # noqa: E402
+    IntentClass,
+    PredictRequest,
+    PredictResponse,
+    UnauthenticatedResponse,
+)
 
 
 class StubBackend:
@@ -111,7 +116,10 @@ def make_app(boot_credential: str, model_hash: str) -> Callable[..., FastAPI]:
         @app.exception_handler(RequestValidationError)
         async def _422(_: Request, exc: RequestValidationError) -> JSONResponse:
             errors = [
-                {**e, "ctx": {k: str(v) if isinstance(v, Exception) else v for k, v in e["ctx"].items()}}
+                {
+                    **e,
+                    "ctx": {k: str(v) if isinstance(v, Exception) else v for k, v in e["ctx"].items()},
+                }
                 if "ctx" in e else e
                 for e in exc.errors()
             ]

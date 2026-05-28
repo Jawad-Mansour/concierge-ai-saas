@@ -8,7 +8,7 @@ tests have a real backing exporter to assert against.
 from __future__ import annotations
 
 import os
-from collections.abc import Callable, Iterator
+from collections.abc import Iterator
 from typing import Any
 
 import pytest
@@ -96,7 +96,10 @@ def app(boot_credential: str) -> FastAPI:
     @fastapi_app.exception_handler(RequestValidationError)
     async def _422(_: Request, exc: RequestValidationError) -> JSONResponse:
         errors = [
-            {**e, "ctx": {k: str(v) if isinstance(v, Exception) else v for k, v in e["ctx"].items()}}
+            {
+                **e,
+                "ctx": {k: str(v) if isinstance(v, Exception) else v for k, v in e["ctx"].items()},
+            }
             if "ctx" in e else e
             for e in exc.errors()
         ]

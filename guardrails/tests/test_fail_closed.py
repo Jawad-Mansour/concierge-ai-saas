@@ -2,7 +2,6 @@
 """T032 — fail-closed coverage. Any internal exception → block(engine_error / config_error)."""
 from __future__ import annotations
 
-import pytest
 from fastapi.testclient import TestClient
 
 from app import rails_engine, redaction
