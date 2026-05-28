@@ -110,6 +110,14 @@ class SequencePlanner:
         return self.plans[len(tool_calls)]
 
 
+class RecordingCostTracker:
+    def __init__(self):
+        self.calls = []
+
+    def record_llm_call(self, **kwargs):
+        self.calls.append(kwargs)
+
+
 def router_payload(**overrides):
     payload = {
         "tenant_id": "tenant-a",
@@ -485,12 +493,17 @@ def test_anthropic_planner_reads_key_from_environment(monkeypatch):
                         '"final_response": null}'
                     )
                 }
-            ]
+            ],
+            "usage": {"input_tokens": 31, "output_tokens": 9},
         }
 
     monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
     monkeypatch.setenv("ANTHROPIC_MODEL", "test-model")
-    planner = AnthropicAgentPlanner(post_json=fake_post_json)
+    cost_tracker = RecordingCostTracker()
+    planner = AnthropicAgentPlanner(
+        post_json=fake_post_json,
+        cost_tracker=cost_tracker,
+    )
 
     plan = planner.plan(request=agent_payload_model(), tool_calls=[])
 
@@ -498,6 +511,15 @@ def test_anthropic_planner_reads_key_from_environment(monkeypatch):
     assert calls[0][1]["model"] == "test-model"
     assert calls[0][2]["x-api-key"] == "test-key"
     assert "tenant-a" not in calls[0][1]["messages"][0]["content"]
+    assert cost_tracker.calls == [
+        {
+            "tenant_id": "tenant-a",
+            "provider": "anthropic",
+            "model": "test-model",
+            "input_tokens": 31,
+            "output_tokens": 9,
+        }
+    ]
 
 
 def test_anthropic_planner_requires_api_key(monkeypatch):

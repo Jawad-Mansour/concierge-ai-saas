@@ -182,4 +182,5 @@ class MemoryService:
         return request
 
     def _key(self, tenant_id: str, conversation_id: str) -> str:
-        return f"tenant:{tenant_id}:conversation:{conversation_id}:memory"
+        # Matches Mohammad's tenant-erasure pattern: session:tenant:{tenant_id}:*
+        return f"session:tenant:{tenant_id}:conversation:{conversation_id}:memory"

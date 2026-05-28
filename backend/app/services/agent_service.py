@@ -99,6 +99,19 @@ class AgentPlanner(Protocol):
         """Choose the next tool or return a final response."""
 
 
+class CostTracker(Protocol):
+    def record_llm_call(
+        self,
+        *,
+        tenant_id: str,
+        provider: str,
+        model: str,
+        input_tokens: int | None,
+        output_tokens: int | None,
+    ) -> None:
+        """Record one billable hosted-model call for tenant cost attribution."""
+
+
 class ToolRegistry:
     def __init__(
         self,
@@ -156,11 +169,13 @@ class AnthropicAgentPlanner:
         model: str | None = None,
         timeout_seconds: int = 20,
         post_json=None,
+        cost_tracker: CostTracker | None = None,
     ) -> None:
         self.api_key = api_key or os.getenv("ANTHROPIC_API_KEY")
         self.model = model or os.getenv("ANTHROPIC_MODEL", "claude-3-5-haiku-latest")
         self.timeout_seconds = timeout_seconds
         self.post_json = post_json or self._post_json
+        self.cost_tracker = cost_tracker
         if not self.api_key:
             raise AgentConfigurationError("ANTHROPIC_API_KEY is not configured")
 
@@ -186,6 +201,7 @@ class AnthropicAgentPlanner:
             },
             self.timeout_seconds,
         )
+        self._record_cost(tenant_id=request.tenant_id, response=response)
         return self._parse_plan(response)
 
     def _system_prompt(self) -> str:
@@ -228,6 +244,18 @@ class AnthropicAgentPlanner:
             )
         except (KeyError, IndexError, TypeError, ValueError, json.JSONDecodeError) as exc:
             raise AgentPlannerError("invalid Anthropic planner response") from exc
+
+    def _record_cost(self, *, tenant_id: str, response: dict) -> None:
+        if self.cost_tracker is None:
+            return
+        usage = response.get("usage") or {}
+        self.cost_tracker.record_llm_call(
+            tenant_id=tenant_id,
+            provider="anthropic",
+            model=self.model,
+            input_tokens=usage.get("input_tokens"),
+            output_tokens=usage.get("output_tokens"),
+        )
 
     def _post_json(
         self,

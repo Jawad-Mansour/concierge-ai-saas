@@ -7,7 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.services.agent_service import AgentService
 from app.services.memory_service import MemoryService
-from app.services.router_service import RouterService
+from app.services.router_service import Classification, RouterService
 
 
 class ChatError(ValueError):
@@ -71,7 +71,12 @@ class ChatService:
         self.router_service = router_service
         self.agent_service = agent_service
 
-    def handle_message(self, payload: ChatRequest | dict) -> ChatResponse:
+    def handle_message(
+        self,
+        payload: ChatRequest | dict,
+        *,
+        classification: Classification | object | None = None,
+    ) -> ChatResponse:
         request = self._validate(payload)
         self.memory_service.append_message(
             {
@@ -96,7 +101,8 @@ class ChatService:
                 "contact_email": request.contact_email,
                 "contact_phone": request.contact_phone,
                 "trace_id": request.trace_id,
-            }
+            },
+            classification=classification,
         )
         response_text = self._response_text(
             request=request,
