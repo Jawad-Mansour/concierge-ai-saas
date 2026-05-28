@@ -5,6 +5,7 @@ Per Principle IX-relevant hygiene (research.md cross-cutting confirmations):
 no helper in this module accepts the visitor's `message` text — the rule is
 held in code, not just convention.
 """
+
 from __future__ import annotations
 
 import json

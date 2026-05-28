@@ -1,6 +1,7 @@
 # Owner: Jana
 """T029 — fail-closed on timeout AND on every exception path. The reserved
 `confidence == 0.0` sentinel (data-model.md §Confidence values) holds for both."""
+
 from __future__ import annotations
 
 import time

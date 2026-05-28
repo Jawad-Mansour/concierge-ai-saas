@@ -1,5 +1,6 @@
 # Owner: Jana
 """T015 — same body twice → byte-identical JSON (US1 acceptance scenario)."""
+
 from __future__ import annotations
 
 from fastapi.testclient import TestClient

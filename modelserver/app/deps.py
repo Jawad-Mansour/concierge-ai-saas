@@ -8,6 +8,7 @@ TBD: confirm against `infra/vault/policies/` (Mohammad) before merging the
 serving slice. The placeholder is treated as load-bearing — the agent will
 swap in the real path during integration.
 """
+
 from __future__ import annotations
 
 import hmac

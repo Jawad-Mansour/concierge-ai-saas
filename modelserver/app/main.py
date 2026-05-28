@@ -10,6 +10,7 @@ Boot sequence (data-model.md "Boot-time state transitions"):
   6. (warm-up handled implicitly by the first inbound request)
 The listener does NOT open until 1–5 return successfully.
 """
+
 from __future__ import annotations
 
 import os
@@ -17,7 +18,12 @@ import os
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+try:
+    from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+
+    _OTEL_AVAILABLE = True
+except (ModuleNotFoundError, ImportError):
+    _OTEL_AVAILABLE = False
 
 from . import classifier, model_loader, telemetry
 from .deps import fetch_vault_credential, require_service_credential
@@ -32,7 +38,8 @@ def create_app() -> FastAPI:
     telemetry.init(service_name="modelserver")
 
     app = FastAPI(title="Concierge modelserver")
-    FastAPIInstrumentor.instrument_app(app)
+    if _OTEL_AVAILABLE:
+        FastAPIInstrumentor.instrument_app(app)
 
     app.state.backend = loaded.backend
     app.state.unknown_threshold = loaded.unknown_threshold

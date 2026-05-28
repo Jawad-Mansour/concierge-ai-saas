@@ -1,5 +1,6 @@
 # Owner: Jana
 """T014 — happy-path /predict shape per spec User Story 1 acceptance scenarios."""
+
 from __future__ import annotations
 
 import json

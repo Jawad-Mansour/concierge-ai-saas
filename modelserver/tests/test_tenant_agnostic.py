@@ -1,5 +1,6 @@
 # Owner: Jana
 """T044 — same message under two `tenant_id` values → byte-identical responses (SC-008)."""
+
 from __future__ import annotations
 
 from fastapi.testclient import TestClient

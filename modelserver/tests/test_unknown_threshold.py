@@ -3,6 +3,7 @@
 preserving the raw probability as the response confidence (data-model.md
 §Confidence values: 0.0 is reserved for the timeout-degraded path, NOT for
 low-confidence)."""
+
 from __future__ import annotations
 
 from fastapi.testclient import TestClient

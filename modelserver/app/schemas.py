@@ -4,6 +4,7 @@
 Authoritative against `specs/001-classifier-service/contracts/shared-schemas.yaml`
 and `data-model.md` — PRs that change one without the other are rejected in review.
 """
+
 from __future__ import annotations
 
 from typing import Literal

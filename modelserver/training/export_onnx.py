@@ -8,6 +8,7 @@ by silent export drift (research.md Decision 2 open risk "ONNX numerical drift")
 Exits non-zero if max-abs-diff exceeds the epsilon — the operator must rerun
 training or change the export settings before shipping.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -38,9 +39,7 @@ class TinyCNN(nn.Module):
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--pt", type=Path, default=Path("classifier_dl.pt"))
-    parser.add_argument(
-        "--out", type=Path, default=Path("../artifacts/classifier.onnx")
-    )
+    parser.add_argument("--out", type=Path, default=Path("../artifacts/classifier.onnx"))
     args = parser.parse_args(argv)
 
     checkpoint = torch.load(args.pt, map_location="cpu")

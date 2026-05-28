@@ -1,5 +1,6 @@
 # Owner: Jana
 """T031 — model_loader.load() refuses to start on hash mismatch / missing / truncated artifact."""
+
 from __future__ import annotations
 
 import hashlib
@@ -10,7 +11,9 @@ import pytest
 from app import model_loader
 
 
-def _write_card(dir_: Path, *, sha256: str, artifact_type: str = "joblib", filename: str = "classifier.joblib") -> None:
+def _write_card(
+    dir_: Path, *, sha256: str, artifact_type: str = "joblib", filename: str = "classifier.joblib"
+) -> None:  # noqa: E501
     (dir_ / "model_card.md").write_text(
         f"""---
 artifact_filename: {filename}
@@ -87,8 +90,6 @@ def test_load_exits_on_artifact_extension_mismatch(tmp_path: Path):
     artifacts = tmp_path / "artifacts"
     artifacts.mkdir()
     (artifacts / "classifier.bin").write_bytes(b"x")
-    _write_card(
-        artifacts, sha256=hashlib.sha256(b"x").hexdigest(), filename="classifier.bin"
-    )
+    _write_card(artifacts, sha256=hashlib.sha256(b"x").hexdigest(), filename="classifier.bin")
     with pytest.raises(SystemExit):
         model_loader.load(artifacts_dir=artifacts)

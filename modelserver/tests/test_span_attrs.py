@@ -1,5 +1,6 @@
 # Owner: Jana
 """T026 — every prediction emits a span carrying the six EvaluationSpan attrs."""
+
 from __future__ import annotations
 
 import re
@@ -23,11 +24,7 @@ def test_span_carries_evaluation_attrs(make_app, boot_credential, span_exporter)
     spans = span_exporter.get_finished_spans()
     # Find the classifier-decorated span (an OTel-instrumented FastAPI may emit a
     # server span too; we set our attrs on the active span inside `classify`).
-    matching = [
-        s
-        for s in spans
-        if s.attributes and s.attributes.get("classifier.predicted_class")
-    ]
+    matching = [s for s in spans if s.attributes and s.attributes.get("classifier.predicted_class")]
     assert matching, f"no span carried classifier.predicted_class — got: {[s.name for s in spans]}"
     attrs = matching[0].attributes
     assert attrs["tenant_id"] == "tenant-acme"
