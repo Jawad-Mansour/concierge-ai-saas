@@ -59,6 +59,9 @@ class LeadRepository(Protocol):
     def create(self, lead: LeadCreate) -> LeadRecord:
         """Persist a tenant-scoped lead."""
 
+    def list_by_tenant(self, *, tenant_id: str) -> list[LeadRecord]:
+        """Return leads scoped to one tenant."""
+
 
 class InMemoryLeadRepository:
     """Small repository implementation for service tests and local smoke slices."""
@@ -101,3 +104,6 @@ class InMemoryLeadRepository:
         )
         self.records.append(record)
         return record
+
+    def list_by_tenant(self, *, tenant_id: str) -> list[LeadRecord]:
+        return [record for record in self.records if record.tenant_id == tenant_id]
