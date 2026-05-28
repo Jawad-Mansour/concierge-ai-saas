@@ -9,3 +9,7 @@ dependencies = [
     "hvac>=2.3",
     "requests>=2.31",
 ]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"

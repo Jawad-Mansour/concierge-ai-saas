@@ -187,12 +187,17 @@ gets rejected. CORS is defense-in-depth, not the boundary.
 - [x] GET /admin/widget-config/embed-snippet — returns embed script tag
 - [x] Role-gated: tenant_admin only, uses get_tenant_db RLS dependency
 
-- [x] `streamlit_app.py` — overwrite placeholder (backend APIs ready)
-- [ ] `pages/tenant_settings.py` — basic info, allowed_origins editor
-- [x] `pages/widget_config.py` — GET/PUT widget config, embed snippet
+- [x] `streamlit_app.py` — login form, session persistence via URL token,
+      sidebar nav, logout
+- [x] `pages/widget_config.py` — current config display, edit form with
+      live color picker, embed snippet, widget preview iframe,
+      test origin validation
+- [x] `pages/tenant_settings.py` — JWT decode, role/tenant_id/expiry,
+      full UUID display
 - [ ] `pages/guardrails_config.py` — tenant rails (topics, persona, refusal tone) — coordinate with Jana
-- [ ] Live update without restart (read config from DB on each render)
-- [ ] Auth: only tenant_admin role can access (use fastapi-users session — coordinate with Mohammad)
+- [ ] `pages/leads_dashboard.py` — coordinate with Ali
+- [x] Live update without restart (st.rerun() after save)
+- [x] Auth: real login form with JWT, session persists across refresh
 
 ## Phase 7 — Friday demo polish
 
@@ -283,3 +288,9 @@ gets rejected. CORS is defense-in-depth, not the boundary.
 - CSP + CORS wired. widget.js stub endpoint live. Demo pages updated.
   Browser proof: allowed host loads widget.js, blocked host shows CSP
   violation in DevTools console. Friday demo ready for this piece.
+
+### Fri 2026-05-29
+
+- Admin UI complete: login, widget config CRUD, tenant settings,
+  session persistence on refresh, Everforest Hard Dark theme,
+  widget preview iframe. All pages working.
