@@ -23,8 +23,8 @@ _MODELSERVER = Path(__file__).resolve().parent.parent.parent / "modelserver"
 if str(_MODELSERVER) not in sys.path:
     sys.path.insert(0, str(_MODELSERVER))
 
-import yaml
-from sklearn.metrics import classification_report, f1_score
+import yaml  # noqa: E402
+from sklearn.metrics import classification_report, f1_score  # noqa: E402
 
 
 def compute_macro_f1(predictions: list[str], gold: list[str]) -> float:

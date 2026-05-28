@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import Iterable
+from collections.abc import Iterable
 
 import yaml
 
@@ -34,7 +34,9 @@ def _load_pattern_set() -> tuple[
 ]:
     rails = yaml.safe_load((_CONFIG_DIR / "rails.yaml").read_text(encoding="utf-8")) or {}
     jail = yaml.safe_load((_CONFIG_DIR / "jailbreak_rules.yaml").read_text(encoding="utf-8")) or {}
-    xtenant = yaml.safe_load((_CONFIG_DIR / "cross_tenant_rules.yaml").read_text(encoding="utf-8")) or {}
+    xtenant = (
+        yaml.safe_load((_CONFIG_DIR / "cross_tenant_rules.yaml").read_text(encoding="utf-8")) or {}
+    )
 
     patterns = rails.get("patterns", {})
     prompt_injection = _compile_patterns(patterns.get("prompt_injection", []))
@@ -103,21 +105,23 @@ def evaluate_tenant_rails(
         if trigger.kind == "keyword":
             if trigger.value and trigger.value.lower() in message.lower():
                 return "block", "escalation_trigger", "escalate", None
-        elif trigger.kind == "intent":
+        elif (
+            trigger.kind == "intent"
+            and trigger.value
+            and trigger.value.lower() in message.lower()
+        ):
             # Production: NeMo intent classifier. Heuristic fallback: substring.
-            if trigger.value and trigger.value.lower() in message.lower():
-                return "block", "escalation_trigger", "escalate", None
+            return "block", "escalation_trigger", "escalate", None
 
     allowed = tenant_config.allowed_topics
-    if allowed:
-        if not _topic_in_allowed(message, allowed):
-            persona = tenant_config.refusal_persona
-            template = persona.template if persona else "I can only help with {topic}. {reason}"
-            text = _compose_refusal(
-                template,
-                topic=", ".join(allowed),
-                reason="That falls outside what I can answer here.",
-            )
-            return "block", "off_topic", "tenant_refusal", text
+    if allowed and not _topic_in_allowed(message, allowed):
+        persona = tenant_config.refusal_persona
+        template = persona.template if persona else "I can only help with {topic}. {reason}"
+        text = _compose_refusal(
+            template,
+            topic=", ".join(allowed),
+            reason="That falls outside what I can answer here.",
+        )
+        return "block", "off_topic", "tenant_refusal", text
 
     return "pass", None, None, None

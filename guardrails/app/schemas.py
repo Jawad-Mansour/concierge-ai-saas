@@ -6,7 +6,7 @@ and `data-model.md` — PRs that change one without the other are rejected in re
 """
 from __future__ import annotations
 
-from typing import Annotated, Literal, Union
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -110,7 +110,7 @@ class EvaluationResponseBlock(BaseModel):
 
 
 EvaluationResponse = Annotated[
-    Union[EvaluationResponsePass, EvaluationResponseBlock],
+    EvaluationResponsePass | EvaluationResponseBlock,
     Field(discriminator="decision"),
 ]
 
