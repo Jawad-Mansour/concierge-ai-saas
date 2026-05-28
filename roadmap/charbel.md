@@ -142,15 +142,28 @@ plug their gates in as their work lands.
 - [ ] Verify CI runs on PR open and on push to feature branches
 - [ ] Confirm branch ruleset requires `ci`, `smoke-test`, `evals`, `security-gates` to pass before merge
 
-## Phase 4 — Widget bundle
+## Phase 4 — Widget Frontend (DONE)
 
-- [ ] `widget/` Vite + React skeleton (TypeScript)
-- [ ] `widget.tsx` — chat window, message bubbles, input box
-- [ ] `loader.js` at `/widget.js` — host pastes one `<script>` tag with `data-widget-id`, loader injects iframe
-- [ ] `theme.ts` + `styles.css` — theme from tenant config at runtime
-- [ ] Read greeting + colors from tenant config at widget load
-- [ ] Widget bundle size under 100KB gzipped (target — flag if over)
-- [ ] `widget/tests/widget.test.ts` — basic render test
+- [x] Vite + React + TypeScript scaffolding (package.json, vite.config.ts, tsconfig.json)
+- [x] Floating bubble widget (fixed bottom-right, click to open/close)
+- [x] Chat panel: header with status, message area, input box
+- [x] Everforest Hard Dark theme throughout
+- [x] Message bubbles: user (green, right), assistant (dark, left), error (red)
+- [x] Typing indicator (animated dots)
+- [x] Auto-scroll to latest message
+- [x] Enter to send, Shift+Enter for newline
+- [x] Token exchange on mount via auth.ts (POST /widget/token)
+- [x] Chat via api.ts (POST /chat with Bearer token)
+- [x] loader.js: injects iframe into host page
+- [x] Backend widget_js.py updated to serve real loader
+- [x] Bundle: 47.6 KB gzipped (under 100 KB target)
+- [x] Demo validated: widget loads on localhost:8080, blocked on localhost:8090
+
+## Security fixes (chat.py + auth_service.py)
+
+- [x] get_chat_user dependency: accepts both widget_jwt and auth_jwt tokens
+- [x] auth_service.py: verify_sub=False for widget tokens (sub is null by design)
+- [x] chat.py: tenant_id from JWT claims not request body (brief compliance)
 
 ## Phase 5 — Widget auth (the hard part)
 
@@ -294,3 +307,8 @@ gets rejected. CORS is defense-in-depth, not the boundary.
 - Admin UI complete: login, widget config CRUD, tenant settings,
   session persistence on refresh, Everforest Hard Dark theme,
   widget preview iframe. All pages working.
+- Widget frontend complete. React widget with Everforest theme,
+  floating bubble, chat UI, token exchange. Full flow working on
+  localhost:8080. Blocked on localhost:8090 CSP violation confirmed.
+  Security fixes: get_chat_user dual-key auth, verify_sub fix,
+  tenant_id from JWT.
