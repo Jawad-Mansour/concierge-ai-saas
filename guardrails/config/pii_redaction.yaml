@@ -1,1 +1,31 @@
 # Owner: Jana
+# Presidio recognizer set. Pattern-only — no spaCy NLP backend (research.md
+# Decision 2 image-size mitigation). Recognizers below are registered with
+# Presidio at boot in app/redaction.py.
+
+recognizers:
+  EMAIL_ADDRESS:
+    builtin: true
+  PHONE_NUMBER:
+    builtin: true
+  CREDIT_CARD:
+    builtin: true
+  US_SSN:
+    builtin: true
+
+  # Project-specific custom recognizers — research.md Decision 2 open risk
+  # "API-key prefix collision": the Anthropic recognizer is checked BEFORE the
+  # OpenAI recognizer; the OpenAI pattern explicitly excludes the `sk-ant-`
+  # prefix so a `sk-ant-…` value is tagged HOSTED_LLM_API_KEY_ANTHROPIC, not
+  # HOSTED_LLM_API_KEY_OPENAI.
+  HOSTED_LLM_API_KEY_ANTHROPIC:
+    pattern: "sk-ant-[A-Za-z0-9_-]{20,}"
+    confidence: 0.95
+  HOSTED_LLM_API_KEY_OPENAI:
+    pattern: "sk-(?!ant-)[A-Za-z0-9]{20,}"
+    confidence: 0.9
+  GENERIC_BEARER_TOKEN:
+    # JWT / opaque bearer tokens. Conservative: requires three dot-separated
+    # base64url segments to avoid matching unrelated long strings.
+    pattern: "eyJ[A-Za-z0-9_-]{10,}\\.[A-Za-z0-9_-]{10,}\\.[A-Za-z0-9_-]{10,}"
+    confidence: 0.9

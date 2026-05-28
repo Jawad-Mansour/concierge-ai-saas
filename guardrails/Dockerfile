@@ -35,6 +35,21 @@ ENV PYTHONPATH=/app
 
 WORKDIR /app
 COPY app/ ./app/
+COPY config/ ./config/
+
+# Principle II — compute the rails-config content hash at build time and pin it
+# into app/version.py. The boot path recomputes from disk and refuses to start
+# on mismatch (see app/main.py). The < 500 MB image budget is enforced by the
+# CI image-size job; this Dockerfile copies neither training tools nor torch.
+RUN python -c "import hashlib, pathlib, sys; \
+    configs = sorted(pathlib.Path('config').glob('*.yaml')); \
+    h = hashlib.sha256(); \
+    [h.update(p.name.encode()) or h.update(b':') or h.update(p.read_bytes()) or h.update(b'\\n') for p in configs]; \
+    digest = h.hexdigest(); \
+    pathlib.Path('app/version.py').write_text(\
+        '# Generated at image build — do not edit\\n' \
+        'RAILS_CONFIG_HASH = ' + repr(digest) + '\\n' \
+        'RAILS_VERSION = ' + repr(digest[:12]) + '\\n')"
 
 EXPOSE 8002
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8002", "--reload"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8002", "--workers", "2"]
