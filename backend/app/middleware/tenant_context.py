@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.middleware.auth_middleware import UserClaims, get_current_user
-
+from app.services.tracing_service import set_tenant #ANA JANA ZEDTO
 
 def get_tenant_db(
     claims: UserClaims = Depends(get_current_user),
@@ -30,7 +30,7 @@ def get_tenant_db(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="tenant_id missing from token",
         )
-
+    set_tenant(tenant_id) #HAYDA ANA JANA ZEDTO
     db.execute(
         text("SELECT set_config('app.tenant_id', :tid, true)"),
         {"tid": str(tenant_id)},

@@ -13,9 +13,11 @@ Receiving an unknown action raises `UnknownGuardrailAction` from the client
 """
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass
 
 from app.services.guardrail_service import GuardrailClient, GuardrailDecision
+from app.utils import metrics
 
 PLATFORM_REFUSAL_TEXT = (
     "I can't help with that request. If you have another question, I'm happy to help."
@@ -52,10 +54,27 @@ async def screen_input(
     message: str,
     tenant_config: dict | None = None,
 ) -> tuple[GuardrailDecision, VisitorReply]:
-    decision = await client.check_input(
-        tenant_id=tenant_id, message=message, tenant_config=tenant_config
-    )
-    return decision, render_for_visitor(decision)
+    start = time.perf_counter()
+    outcome = "ok"
+    try:
+        decision = await client.check_input(
+            tenant_id=tenant_id, message=message, tenant_config=tenant_config
+        )
+        reply = render_for_visitor(decision)
+        if decision.decision == "block":
+            # fallback_response action means the engine itself failed (rule_name="engine_error")
+            outcome = "error" if decision.action == "fallback_response" else "blocked"
+        return decision, reply
+    except Exception:
+        outcome = "error"
+        raise
+    finally:
+        metrics.record_downstream(
+            tenant_id=tenant_id,
+            target="guardrails",
+            outcome=outcome,
+            latency_ms=(time.perf_counter() - start) * 1000,
+        )
 
 
 async def screen_output(
@@ -65,7 +84,23 @@ async def screen_output(
     llm_response: str,
     tenant_config: dict | None = None,
 ) -> tuple[GuardrailDecision, VisitorReply]:
-    decision = await client.check_output(
-        tenant_id=tenant_id, llm_response=llm_response, tenant_config=tenant_config
-    )
-    return decision, render_for_visitor(decision)
+    start = time.perf_counter()
+    outcome = "ok"
+    try:
+        decision = await client.check_output(
+            tenant_id=tenant_id, llm_response=llm_response, tenant_config=tenant_config
+        )
+        reply = render_for_visitor(decision)
+        if decision.decision == "block":
+            outcome = "error" if decision.action == "fallback_response" else "blocked"
+        return decision, reply
+    except Exception:
+        outcome = "error"
+        raise
+    finally:
+        metrics.record_downstream(
+            tenant_id=tenant_id,
+            target="guardrails",
+            outcome=outcome,
+            latency_ms=(time.perf_counter() - start) * 1000,
+        )
