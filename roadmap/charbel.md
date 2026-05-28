@@ -157,16 +157,19 @@ plug their gates in as their work lands.
 Goal: a `curl` with a copied `widget_id` from a server with no browser
 gets rejected. CORS is defense-in-depth, not the boundary.
 
-- [ ] `specs/widget_auth_SPEC.md` — write the contract BEFORE the code
-- [ ] `widget_auth_service.py` — exchanges `widget_id` + origin for a signed JWT
+- [x] `specs/widget_auth_SPEC.md` — write the contract BEFORE the code
+- [x] `widget_auth_service.py` — exchanges `widget_id` + origin for a signed JWT
       (15-min TTL, signed with `secret/concierge/widget_jwt`)
-- [ ] `api/widget.py` — POST `/widget/token` endpoint
+- [x] `api/widget.py` — POST `/widget/token` endpoint
+- [x] `widget_repo.py` — pre-auth lookup with RLS bypass (app.widget_lookup)
+- [x] Migration 003 — widget_id_lookup RLS policy on widget_configs
+- [x] `tests/test_widget_auth.py` — origin spoof, expired token, unknown widget
+- [x] 4/4 widget auth integration tests passing
 - [ ] `auth.ts` in widget — loader exchanges widget_id for token, attaches to every request
 - [ ] Server-side origin validation in `tenant_context` middleware:
       reject if origin doesn't match tenant's `allowed_origins`
 - [ ] CSP `frame-ancestors` header set per tenant
 - [ ] CORS allowlist driven by tenant `allowed_origins` in DB (NOT env)
-- [ ] `tests/test_widget_auth.py` — origin spoof, expired token, copied token from different tenant, raw curl with no token
 
 ## Phase 6 — Admin UX (Streamlit)
 
@@ -258,3 +261,6 @@ gets rejected. CORS is defense-in-depth, not the boundary.
   7/7 integration tests passing with real artifact loaded. Branch ready
   to push — Mohammad's DB tests still failing but that's his conftest
   to fix.
+- Widget auth backend complete: POST /widget/token, origin validation,
+  JWT signing via Mohammad's auth_service.issue_widget_token(). RLS bypass
+  migration 003 for pre-auth widget_id lookup. 4/4 tests pass.

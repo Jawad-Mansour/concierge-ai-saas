@@ -42,10 +42,12 @@ app = FastAPI(title="Concierge backend", lifespan=lifespan)
 from app.api.auth import router as auth_router      # noqa: E402
 from app.api.chat import router as chat_router  # noqa: E402
 from app.api.tenants import router as tenants_router  # noqa: E402
+from app.api.widget import router as widget_router  # noqa: E402
 
 app.include_router(auth_router, prefix="/auth", tags=["auth"])
 app.include_router(chat_router)
 app.include_router(tenants_router, prefix="/tenants", tags=["tenants"])
+app.include_router(widget_router)
 
 # ── Health (no auth required) ────────────────────────────────────────────────
 @app.get("/health", tags=["health"])
