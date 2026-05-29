@@ -7,7 +7,7 @@ from dataclasses import asdict
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.repositories.embedding_repo import EmbeddingChunk, InMemoryEmbeddingRepository
+from app.db import SessionLocal
 from app.repositories.lead_repo import InMemoryLeadRepository
 from app.services.agent_service import (
     AgentService,
@@ -18,6 +18,11 @@ from app.services.agent_service import (
 from app.services.chat_service import ChatService, ChatValidationError
 from app.services.lead_service import LeadService
 from app.services.memory_service import InMemoryMemoryStore, MemoryService, RedisMemoryStore
+from app.services.rag_answer_service import (
+    AnthropicRagAnswerGenerator,
+    ExtractiveRagAnswerGenerator,
+)
+from app.services.rag_runtime import build_pgvector_rag_service, build_rag_service, use_pgvector_backend
 from app.services.rag_service import RagService
 from app.services.router_service import RouterService
 
@@ -48,30 +53,27 @@ class ChatRequestBody(BaseModel):
     trace_id: str | None = None
 
 
-def build_chat_service() -> ChatService:
-    # Mocked Ali/Mohammad-owned persistence input:
-    # replace this in-memory RAG corpus with tenant-scoped CMS/pgvector retrieval.
-    rag_service = RagService(
-        InMemoryEmbeddingRepository(
-            [
-                EmbeddingChunk(
-                    chunk_id="demo-pricing",
-                    tenant_id="demo-tenant",
-                    cms_content_id="demo-cms-pricing",
-                    title="Demo Pricing",
-                    text="The demo tenant team plan costs 49 dollars per month.",
-                    url="https://demo.example/pricing",
-                )
-            ]
-        )
-    )
+def build_chat_service(*, db=None) -> ChatService:
+    rag_service = build_pgvector_rag_service(db) if db is not None else build_rag_service()
     lead_service = LeadService(repository=InMemoryLeadRepository())
     memory_service = MemoryService(build_memory_store())
     return ChatService(
         memory_service=memory_service,
         router_service=RouterService(rag_tool=rag_service, lead_tool=lead_service),
         agent_service=build_agent_service(rag_service=rag_service, lead_service=lead_service),
+        rag_answer_generator=build_rag_answer_generator(),
     )
+
+
+def get_chat_service():
+    if not use_pgvector_backend():
+        yield build_chat_service()
+        return
+    db = SessionLocal()
+    try:
+        yield build_chat_service(db=db)
+    finally:
+        db.close()
 
 
 def build_memory_store():
@@ -101,11 +103,17 @@ def _has_anthropic_key() -> bool:
     return bool(key and key != "replace-me")
 
 
+def build_rag_answer_generator():
+    if _has_anthropic_key():
+        return AnthropicRagAnswerGenerator()
+    return ExtractiveRagAnswerGenerator()
+
+
 @router.post("")
 async def chat(
     request: Request,
     body: ChatRequestBody,
-    chat_service: ChatService = Depends(build_chat_service),
+    chat_service: ChatService = Depends(get_chat_service),
 ):
     try:
         classifier_client = getattr(request.app.state, "classifier_client", None)

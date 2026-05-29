@@ -2,11 +2,16 @@
 import pytest
 
 from app.repositories.cms_repo import InMemoryCmsRepository
-from app.repositories.embedding_repo import EmbeddingChunk, InMemoryEmbeddingRepository
+from app.repositories.embedding_repo import (
+    EmbeddingChunk,
+    InMemoryEmbeddingRepository,
+    InMemoryVectorEmbeddingRepository,
+)
 from app.services.embedding_service import (
     EmbeddingService,
     IngestionValidationError,
 )
+from app.services.embedding_provider import HashingEmbeddingProvider, VoyageEmbeddingProvider
 from app.services.rag_service import (
     CrossTenantRetrievalError,
     RagService,
@@ -166,6 +171,58 @@ def test_ingest_cms_content_creates_tenant_scoped_chunks_searchable_by_rag():
     assert result.chunk_count >= 1
     assert rag_result.status == "ok"
     assert rag_result.citations[0].cms_content_id == "cms-a-hours"
+
+
+def test_ingest_cms_content_generates_embeddings_for_vector_retrieval():
+    cms_repo = InMemoryCmsRepository()
+    embedding_provider = HashingEmbeddingProvider(dimensions=16)
+    embedding_repo = InMemoryVectorEmbeddingRepository(
+        embedding_provider=embedding_provider,
+    )
+    ingestion = EmbeddingService(
+        cms_repository=cms_repo,
+        embedding_repository=embedding_repo,
+        embedding_provider=embedding_provider,
+        chunk_size_words=8,
+        chunk_overlap_words=2,
+    )
+
+    ingestion.ingest_content(
+        {
+            "tenant_id": "tenant-a",
+            "content_id": "cms-a-support",
+            "title": "Support",
+            "body": "Premium onboarding support is available every weekday.",
+        }
+    )
+    result = RagService(embedding_repo, strategy="semantic_vector").search(
+        rag_payload(query="weekday onboarding support", top_k=1)
+    )
+
+    assert result.status == "ok"
+    assert result.retrieval_meta.strategy == "semantic_vector"
+    assert result.citations[0].cms_content_id == "cms-a-support"
+
+
+def test_voyage_embedding_provider_uses_voyage_api(monkeypatch):
+    calls = []
+
+    def fake_post_json(url, payload, headers, timeout_seconds):
+        calls.append((url, payload, headers, timeout_seconds))
+        return {"data": [{"embedding": [0.1, 0.2, 0.3]}]}
+
+    monkeypatch.setenv("VOYAGE_API_KEY", "test-voyage-key")
+    provider = VoyageEmbeddingProvider(
+        model="voyage-3.5",
+        post_json=fake_post_json,
+    )
+
+    embedding = provider.embed_text("sample tenant text")
+
+    assert embedding == [0.1, 0.2, 0.3]
+    assert calls[0][0] == "https://api.voyageai.com/v1/embeddings"
+    assert calls[0][1] == {"model": "voyage-3.5", "input": ["sample tenant text"]}
+    assert calls[0][2]["authorization"] == "Bearer test-voyage-key"
 
 
 def test_ingest_cms_content_rejects_unknown_or_empty_fields():

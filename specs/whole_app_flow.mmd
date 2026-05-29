@@ -1,0 +1,79 @@
+%% Owner: Ali
+graph TD
+    subgraph UI["Charbel - Widget and Website"]
+        Visitor["1. Visitor opens tenant website"]
+        WidgetLoad["2. Widget loads tenant config<br>allowed origin, styling, tenant identity"]
+        VisitorMessage["3. Visitor sends message<br>message, session id, page url"]
+    end
+
+    subgraph Auth["Mohammad - Auth, Tenant Context, and Backend Entry"]
+        WidgetAuth["4. Widget/auth layer verifies request<br>origin + token + tenant context"]
+        FastAPI["5. FastAPI backend receives request<br>mounted routers in main.py"]
+        ChatEndpoint["6. POST /chat route<br>validates chat payload"]
+    end
+
+    subgraph Safety["Jana - Safety and Classification"]
+        InputGuardrail["7. Input guardrail<br>block unsafe input or request handoff"]
+        Classifier["8. Classifier predicts intent<br>SPAM, FAQ, ACCOUNT_OPS, HARD_QUESTION, UNKNOWN"]
+    end
+
+    subgraph Ali["Ali - Intelligence Layer"]
+        ChatService["9. ChatService<br>stores user message + builds memory context"]
+        Router["10. RouterService<br>chooses RAG, lead, escalation, agent, or drop"]
+        Memory["11. MemoryService<br>Redis short-term memory with in-memory fallback"]
+        RAG["12. RagService<br>tenant-scoped CMS/knowledge retrieval"]
+        Agent["13. AgentService<br>Anthropic planner or heuristic fallback"]
+        Lead["14. LeadService<br>validate, rate-limit, deduplicate lead"]
+        Escalation["15. EscalationService<br>human handoff with tenant/session checks"]
+    end
+
+    subgraph Data["Shared Data and Platform Services"]
+        CMS["16. CMS content + embeddings<br>tenant-scoped knowledge base"]
+        LeadStore["17. Leads + conversations<br>persistence layer"]
+        Redis["18. Redis session memory<br>session:tenant:tenant_id:*"]
+        CostTracing["19. Cost, tracing, audit, erasure<br>platform observability"]
+    end
+
+    subgraph Response["Response Path"]
+        OutputGuardrail["20. Output guardrail<br>block or rewrite final answer"]
+        WidgetResponse["21. Widget renders response<br>message + decision + trace id"]
+    end
+
+    Visitor --> WidgetLoad
+    WidgetLoad --> VisitorMessage
+    VisitorMessage --> WidgetAuth
+    WidgetAuth --> FastAPI
+    FastAPI --> ChatEndpoint
+    ChatEndpoint --> InputGuardrail
+    InputGuardrail --> Classifier
+    Classifier --> ChatService
+
+    ChatService --> Memory
+    Memory <--> Redis
+    ChatService --> Router
+
+    Router -->|"FAQ/support"| RAG
+    Router -->|"sales/lead"| Lead
+    Router -->|"human handoff"| Escalation
+    Router -->|"hard, unknown, low confidence"| Agent
+    Router -->|"spam"| OutputGuardrail
+
+    RAG <--> CMS
+    Lead --> LeadStore
+    Escalation <--> LeadStore
+    Agent -->|"tool: rag_search"| RAG
+    Agent -->|"tool: capture_lead"| Lead
+    Agent -->|"tool: escalate"| Escalation
+
+    RAG --> ChatService
+    Lead --> ChatService
+    Escalation --> ChatService
+    Agent --> ChatService
+    ChatService --> OutputGuardrail
+    OutputGuardrail --> WidgetResponse
+
+    FastAPI -.-> CostTracing
+    Agent -.-> CostTracing
+    CMS -.-> CostTracing
+    LeadStore -.-> CostTracing
+    Redis -.-> CostTracing

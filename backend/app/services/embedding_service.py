@@ -10,7 +10,8 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from app.models.cms_content import CmsContent
 from app.models.embeddings import CmsChunk
 from app.repositories.cms_repo import CmsRepository
-from app.repositories.embedding_repo import EmbeddingChunk, InMemoryEmbeddingRepository
+from app.repositories.embedding_repo import EmbeddingChunk
+from app.services.embedding_provider import EmbeddingProvider
 
 
 WORD_RE = re.compile(r"\S+")
@@ -59,7 +60,8 @@ class EmbeddingService:
         self,
         *,
         cms_repository: CmsRepository,
-        embedding_repository: InMemoryEmbeddingRepository | None = None,
+        embedding_repository=None,
+        embedding_provider: EmbeddingProvider | None = None,
         chunk_size_words: int = 120,
         chunk_overlap_words: int = 20,
     ) -> None:
@@ -68,10 +70,8 @@ class EmbeddingService:
         if chunk_overlap_words < 0 or chunk_overlap_words >= chunk_size_words:
             raise ValueError("chunk_overlap_words must be smaller than chunk_size_words")
         self.cms_repository = cms_repository
-        # Mocked pgvector/hosted-embedding dependency:
-        # this in-memory lexical repository is replaced once Mohammad's DB/RLS and
-        # the hosted embedding API configuration are ready.
         self.embedding_repository = embedding_repository
+        self.embedding_provider = embedding_provider
         self.chunk_size_words = chunk_size_words
         self.chunk_overlap_words = chunk_overlap_words
 
@@ -96,6 +96,11 @@ class EmbeddingService:
         )
         if self.embedding_repository is not None:
             for chunk in chunks:
+                embedding = chunk.embedding or (
+                    self.embedding_provider.embed_text(chunk.text)
+                    if self.embedding_provider is not None
+                    else None
+                )
                 self.embedding_repository.add_chunk(
                     EmbeddingChunk(
                         chunk_id=chunk.chunk_id,
@@ -107,6 +112,7 @@ class EmbeddingService:
                         content_type=chunk.content_type,
                         locale=chunk.locale,
                         published=chunk.published,
+                        embedding=embedding,
                     )
                 )
         return IngestionResult(
@@ -136,6 +142,11 @@ class EmbeddingService:
                     content_type=content.content_type,
                     locale=content.locale,
                     published=content.published,
+                    embedding=(
+                        self.embedding_provider.embed_text(text)
+                        if self.embedding_provider is not None
+                        else None
+                    ),
                 )
             )
             if start + self.chunk_size_words >= len(words):

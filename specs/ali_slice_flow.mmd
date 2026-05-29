@@ -1,0 +1,43 @@
+%% Owner: Ali
+graph TD
+    UI["1. Visitor message arrives from widget"]
+    ChatAPI["2. POST /chat<br>backend/app/api/chat.py"]
+    Jana["3. Jana classifier + guardrails<br>if available"]
+    ChatService["4. ChatService<br>store user message + build memory context"]
+    Router["5. RouterService<br>choose drop, RAG, lead, escalation, or agent"]
+
+    RAG["6A. RagService<br>tenant-scoped knowledge retrieval"]
+    Lead["6B. LeadService<br>validate + deduplicate contact info"]
+    Escalation["6C. EscalationService<br>create human handoff"]
+    Agent["6D. AgentService<br>Anthropic planner or heuristic fallback"]
+
+    Tools["7. Agent tool registry<br>rag_search, capture_lead, escalate"]
+    Memory["8. MemoryService<br>Redis short-term memory or in-memory fallback"]
+    OutputGuardrail["9. Output guardrail<br>block or rewrite if needed"]
+    Response["10. Response to UI<br>conversation_id, decision, message, trace_id"]
+
+    ChatAPI --> Jana
+    UI --> ChatAPI
+    Jana --> ChatService
+    ChatAPI --> ChatService
+    ChatService --> Memory
+    ChatService --> Router
+
+    Router -->|"FAQ or support"| RAG
+    Router -->|"sales or lead"| Lead
+    Router -->|"human handoff"| Escalation
+    Router -->|"low confidence, degraded, hard, unknown"| Agent
+    Router -->|"spam"| Response
+
+    Agent --> Tools
+    Tools --> RAG
+    Tools --> Lead
+    Tools --> Escalation
+
+    RAG --> ChatService
+    Lead --> ChatService
+    Escalation --> ChatService
+    Agent --> ChatService
+    ChatService --> Memory
+    ChatService --> OutputGuardrail
+    OutputGuardrail --> Response
