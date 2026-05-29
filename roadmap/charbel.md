@@ -251,6 +251,37 @@ gets rejected. CORS is defense-in-depth, not the boundary.
 - [x] Live update without restart (st.rerun() after save)
 - [x] Auth: real login form with JWT, session persists across refresh
 
+## Phase 6.1 — Guardrails config: backend + chat-path wiring
+
+- [x] Bootstrap gap: scripts/seed_platform.py creates the platform
+      tenant_manager via direct psycopg2 INSERT. Mohammad's
+      seed_tenants.py assumed this user existed but nothing created
+      it — fresh stacks 401'd on first provisioning call.
+- [x] Alembic infrastructure fix: backend/Dockerfile widens build
+      context to repo root so infra/postgres/migrations is COPYed
+      into the image. backend/entrypoint.sh bootstraps alembic_version
+      to 003 (init.sql baseline), then runs `alembic upgrade head`
+      before exec uvicorn. Workarounds documented in entrypoint.sh
+      comments: psycopg2 single-connection stamp (alembic 1.18
+      two-connection deadlock), version files copied to /tmp to
+      avoid alembic's overly-broad .py regex picking up env.py,
+      script_location patched to absolute paths.
+- [x] 004_guardrails_configs.py migration: tenant_id-keyed table
+      with RLS (tenant_isolation, tenant_write, tenant_update,
+      erase_isolation; FORCE row level security). Columns mirror
+      sidecar's TenantConfig schema.
+- [x] backend/app/repositories/guardrails_repo.py: get_for_tenant
+      with inline app.tenant_id set+reset (widget_repo pattern).
+- [x] backend/app/api/admin.py: GET/PUT /admin/guardrails-config,
+      tenant_admin-gated, Pydantic model mirrors sidecar contract.
+- [x] backend/app/api/chat.py: tenant_config=None placeholders
+      replaced with guardrails_repo.get_for_tenant(db, tenant_id).
+      Tenant rails now reach the sidecar on every chat turn.
+- [x] End-to-end validated: PUT escalation_trigger keyword "manager"
+      → chat "I want to speak to a manager" → response
+      {"decision": "escalate", "message": "I will flag this for
+      human follow-up."}. Full chain green.
+
 ## Phase 7 — Friday demo polish
 
 - [ ] Update `deliverables/RUNBOOK.md` §6 with the demo script
@@ -366,3 +397,10 @@ gets rejected. CORS is defense-in-depth, not the boundary.
   test client and guardrails container (added env pass-through),
   invalid probe formats in Jana's redaction test (hex chars where
   digits required). 7/7 green. PR open.
+- Built guardrails config: migration 004 with RLS, repo, admin
+  endpoints (GET/PUT), wired chat.py to load tenant config from DB
+  on every turn. Closed two infra gaps along the way: alembic was
+  never actually running at backend startup (init.sql was the
+  only schema source), and seed_tenants.py needed a bootstrap
+  tenant_manager that nothing created. End-to-end demo working:
+  admin edits config in DB → chat behavior changes live.
