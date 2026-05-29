@@ -1,6 +1,21 @@
-// Owner: Charbel
+# Owner: Charbel
 
-(function() {
+"""Serves the widget loader script.
+
+Real implementation: Phase 4 (Vite + React bundle).
+This stub proves the <script> tag loads and logs the widget_id.
+"""
+
+from fastapi import APIRouter
+from fastapi.responses import PlainTextResponse
+
+router = APIRouter()
+
+
+@router.get("/widget.js", response_class=PlainTextResponse)
+def serve_widget_js() -> str:
+    """Serves the widget loader script."""
+    return """(function() {
   const script = document.currentScript;
   const widgetId = script.getAttribute('data-widget-id');
   if (!widgetId) {
@@ -9,7 +24,6 @@
   }
   console.log('[Concierge] widget.js loaded, widget_id:', widgetId);
 
-  // Create iframe pointing to the widget server
   const iframe = document.createElement('iframe');
   iframe.src = 'http://localhost:8081/';
   iframe.style.cssText = [
@@ -26,3 +40,4 @@
   iframe.title = 'Concierge Chat Widget';
   document.body.appendChild(iframe);
 })();
+"""

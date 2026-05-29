@@ -5,6 +5,7 @@ import pytest
 
 import app.api.chat as chat_api
 from app.api.chat import ChatRequestBody, chat
+from app.middleware.auth_middleware import UserClaims
 from app.repositories.embedding_repo import EmbeddingChunk, InMemoryEmbeddingRepository
 from app.repositories.lead_repo import InMemoryLeadRepository
 from app.services.agent_service import (
@@ -185,9 +186,12 @@ async def test_chat_api_reads_classifier_from_app_state():
         router_service=RouterService(rag_tool=rag_service()),
     )
 
+    body_data = {k: v for k, v in chat_payload().items() if k != "tenant_id"}
+    claims = UserClaims(user_id=None, tenant_id="tenant-a", role="member")
     response = await chat(
         request,
-        ChatRequestBody(**chat_payload()),
+        ChatRequestBody(**body_data),
+        claims=claims,
         chat_service=service,
     )
 
