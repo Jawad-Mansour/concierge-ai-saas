@@ -1,5 +1,7 @@
 # Owner: Ali
 import pytest
+import sys
+from pathlib import Path
 
 from app.repositories.cms_repo import InMemoryCmsRepository
 from app.repositories.embedding_repo import (
@@ -18,6 +20,12 @@ from app.services.rag_service import (
     RagService,
     RagValidationError,
 )
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from evals.rag import eval_rag  # noqa: E402
 
 
 def rag_repo():
@@ -344,3 +352,124 @@ def test_ingest_cms_repository_lists_only_same_tenant_chunks():
     assert {chunk.tenant_id for chunk in cms_repo.list_chunks(tenant_id="tenant-a")} == {
         "tenant-a"
     }
+
+
+def test_rag_eval_loads_corpus_jsonl_into_chunks(tmp_path):
+    corpus_path = tmp_path / "corpus.jsonl"
+    corpus_path.write_text(
+        "\n".join(
+            [
+                "# Owner: Ali",
+                (
+                    '{"chunk_id":"chunk-a","tenant_id":"tenant-a",'
+                    '"cms_content_id":"cms-a","title":"Pricing",'
+                    '"text":"Team pricing starts at 49 dollars.",'
+                    '"url":"https://tenant-a.example/pricing",'
+                    '"content_type":"page","locale":"en","published":true}'
+                ),
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    chunks = eval_rag.load_corpus(corpus_path)
+
+    assert chunks == [
+        EmbeddingChunk(
+            chunk_id="chunk-a",
+            tenant_id="tenant-a",
+            cms_content_id="cms-a",
+            title="Pricing",
+            text="Team pricing starts at 49 dollars.",
+            url="https://tenant-a.example/pricing",
+            content_type="page",
+            locale="en",
+            published=True,
+        )
+    ]
+
+
+def test_rag_eval_loads_golden_jsonl_into_cases(tmp_path):
+    golden_path = tmp_path / "golden.jsonl"
+    golden_path.write_text(
+        "\n".join(
+            [
+                "# Owner: Ali",
+                (
+                    '{"name":"pricing","tenant_id":"tenant-a",'
+                    '"query":"How much is pricing?",'
+                    '"expected_chunk_id":"chunk-a"}'
+                ),
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    cases = eval_rag.load_cases(golden_path)
+
+    assert cases == [
+        eval_rag.RagEvalCase(
+            name="pricing",
+            tenant_id="tenant-a",
+            query="How much is pricing?",
+            expected_chunk_id="chunk-a",
+        )
+    ]
+
+
+def test_rag_eval_succeeds_when_expected_chunks_are_retrieved(tmp_path):
+    corpus_path = tmp_path / "corpus.jsonl"
+    golden_path = tmp_path / "golden.jsonl"
+    corpus_path.write_text(
+        "\n".join(
+            [
+                "# Owner: Ali",
+                (
+                    '{"chunk_id":"chunk-a","tenant_id":"tenant-a",'
+                    '"cms_content_id":"cms-a","title":"Pricing",'
+                    '"text":"Team pricing starts at 49 dollars."}'
+                ),
+            ]
+        ),
+        encoding="utf-8",
+    )
+    golden_path.write_text(
+        "\n".join(
+            [
+                "# Owner: Ali",
+                (
+                    '{"name":"pricing","tenant_id":"tenant-a",'
+                    '"query":"What does team pricing cost?",'
+                    '"expected_chunk_id":"chunk-a"}'
+                ),
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    result = eval_rag.run_eval(
+        eval_rag.build_service(corpus_path),
+        eval_rag.load_cases(golden_path),
+        top_k=1,
+    )
+
+    assert result.total == 1
+    assert result.hits == 1
+    assert result.recall_at_k == 1.0
+    assert result.failures == []
+
+
+def test_rag_eval_rejects_malformed_jsonl(tmp_path):
+    corpus_path = tmp_path / "corpus.jsonl"
+    corpus_path.write_text("# Owner: Ali\n{not-json}\n", encoding="utf-8")
+
+    with pytest.raises(eval_rag.RagEvalDatasetError, match="not valid JSON"):
+        eval_rag.load_corpus(corpus_path)
+
+
+def test_rag_eval_rejects_empty_golden_set(tmp_path):
+    golden_path = tmp_path / "golden.jsonl"
+    golden_path.write_text("# Owner: Ali\n\n", encoding="utf-8")
+
+    with pytest.raises(eval_rag.RagEvalDatasetError, match="at least one data row"):
+        eval_rag.load_cases(golden_path)

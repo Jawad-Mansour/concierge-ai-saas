@@ -1,0 +1,13 @@
+# Owner: Ali
+{"name": "tenant_a_pricing", "tenant_id": "tenant-a", "query": "How much is the team plan?", "expected_chunk_id": "a-pricing"}
+{"name": "tenant_a_support", "tenant_id": "tenant-a", "query": "Do you help with onboarding?", "expected_chunk_id": "a-pricing"}
+{"name": "tenant_a_hours", "tenant_id": "tenant-a", "query": "When is the showroom open Monday Friday?", "expected_chunk_id": "a-hours"}
+{"name": "tenant_a_email_support", "tenant_id": "tenant-a", "query": "Which plans include email support?", "expected_chunk_id": "a-support"}
+{"name": "tenant_a_refund_window", "tenant_id": "tenant-a", "query": "Can first time customers get a refund within fourteen days?", "expected_chunk_id": "a-refunds"}
+{"name": "tenant_a_slack_integration", "tenant_id": "tenant-a", "query": "Do you integrate with Slack and Google Calendar?", "expected_chunk_id": "a-integrations"}
+{"name": "tenant_a_sso_security", "tenant_id": "tenant-a", "query": "Is SSO available on enterprise plans?", "expected_chunk_id": "a-security"}
+{"name": "tenant_b_enterprise_pricing", "tenant_id": "tenant-b", "query": "What does enterprise pricing include?", "expected_chunk_id": "b-pricing"}
+{"name": "tenant_b_uptime_sla", "tenant_id": "tenant-b", "query": "Do enterprise customers get a ninety nine point nine uptime SLA?", "expected_chunk_id": "b-sla"}
+{"name": "tenant_b_phone_support", "tenant_id": "tenant-b", "query": "Is twenty four seven phone support available?", "expected_chunk_id": "b-support"}
+{"name": "tenant_b_salesforce_integration", "tenant_id": "tenant-b", "query": "Can Tenant B connect to Salesforce and Snowflake?", "expected_chunk_id": "b-integrations"}
+{"name": "tenant_b_soc2_compliance", "tenant_id": "tenant-b", "query": "Does Tenant B maintain SOC 2 Type II controls?", "expected_chunk_id": "b-compliance"}
