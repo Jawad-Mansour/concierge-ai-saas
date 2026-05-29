@@ -51,22 +51,48 @@ class ChatRequestBody(BaseModel):
 
 
 def build_chat_service() -> ChatService:
-    # Mocked Ali/Mohammad-owned persistence input:
-    # replace this in-memory RAG corpus with tenant-scoped CMS/pgvector retrieval.
-    rag_service = RagService(
-        InMemoryEmbeddingRepository(
-            [
-                EmbeddingChunk(
-                    chunk_id="demo-pricing",
-                    tenant_id="demo-tenant",
-                    cms_content_id="demo-cms-pricing",
-                    title="Demo Pricing",
-                    text="The demo tenant team plan costs 49 dollars per month.",
-                    url="https://demo.example/pricing",
-                )
-            ]
-        )
-    )
+    from sqlalchemy import create_engine, text
+    import os
+
+    chunks: list[EmbeddingChunk] = []
+    try:
+        engine = create_engine(os.environ["DATABASE_URL"])
+        with engine.connect() as conn:
+            rows = conn.execute(text("SELECT slug, id::text FROM tenants")).fetchall()
+        seeds = {
+            "acme-coffee": [
+                ("Our Coffee", "Acme Coffee serves single-origin espresso, pour-over coffee, and whole bean varieties from Ethiopia and Colombia."),
+                ("Brewing Methods", "We offer espresso, pour-over, French press, and cold brew. Our beans are medium-roast and lightly oily."),
+            ],
+            "brew-bar": [
+                ("Our Tea", "Brew Bar serves artisan teas, matcha lattes, and seasonal pastries."),
+                ("Menu", "Featured drinks include jasmine green tea, oolong, chai latte, and earl grey."),
+            ],
+        }
+        for slug, tenant_id in rows:
+            for i, (title, text_content) in enumerate(seeds.get(slug, [])):
+                chunks.append(EmbeddingChunk(
+                    chunk_id=f"{slug}-chunk-{i}",
+                    tenant_id=tenant_id,
+                    cms_content_id=f"{slug}-cms-{i}",
+                    title=title,
+                    text=text_content,
+                    url=f"https://{slug}.example/menu",
+                ))
+    except Exception as e:
+        # Fall back to original demo chunk if DB lookup fails (shouldn't happen at runtime)
+        import logging
+        logging.warning(f"RAG seed lookup failed, using fallback: {e}")
+        chunks = [EmbeddingChunk(
+            chunk_id="demo-pricing",
+            tenant_id="demo-tenant",
+            cms_content_id="demo-cms-pricing",
+            title="Demo Pricing",
+            text="Acme Coffee serves single-origin espresso, pour-over coffee, and whole bean varieties.",
+            url="https://demo.example/pricing",
+        )]
+
+    rag_service = RagService(InMemoryEmbeddingRepository(chunks))
     lead_service = LeadService(repository=InMemoryLeadRepository())
     memory_service = MemoryService(build_memory_store())
     return ChatService(

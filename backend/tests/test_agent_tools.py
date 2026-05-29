@@ -488,10 +488,12 @@ def test_anthropic_planner_reads_key_from_environment(monkeypatch):
         return {
             "content": [
                 {
-                    "text": (
-                        '{"tool_name": "rag_search", "reason": "answer from tenant docs", '
-                        '"final_response": null}'
-                    )
+                    "type": "tool_use",
+                    "input": {
+                        "tool_name": "rag_search",
+                        "reason": "answer from tenant docs",
+                        "final_response": None,
+                    },
                 }
             ],
             "usage": {"input_tokens": 31, "output_tokens": 9},
