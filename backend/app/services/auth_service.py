@@ -131,8 +131,11 @@ def verify_token(token: str, is_widget: bool = False) -> dict[str, Any]:
     this directly as a FastAPI dependency building block.
     """
     key = _widget_key() if is_widget else _auth_key()
+    # Widget tokens are issued with sub=None; PyJWT 2.x strict mode rejects
+    # non-string sub, so we disable that check for widget token verification.
+    options = {"verify_sub": False} if is_widget else {}
     try:
-        claims = jwt.decode(token, key, algorithms=[JWT_ALGORITHM])
+        claims = jwt.decode(token, key, algorithms=[JWT_ALGORITHM], options=options)
     except jwt.ExpiredSignatureError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Token expired"

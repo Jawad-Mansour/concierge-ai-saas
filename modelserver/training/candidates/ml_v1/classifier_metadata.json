@@ -1,0 +1,6 @@
+{
+  "model_type": "ml_v1",
+  "framework": "scikit-learn",
+  "export_format": "onnx",
+  "status": "pending — populate after train_ml.ipynb"
+}

@@ -5,6 +5,7 @@ import pytest
 
 import app.api.chat as chat_api
 from app.api.chat import ChatRequestBody, chat
+from app.middleware.auth_middleware import UserClaims
 from app.repositories.embedding_repo import EmbeddingChunk, InMemoryEmbeddingRepository
 from app.repositories.lead_repo import InMemoryLeadRepository
 from app.services.agent_service import (
@@ -87,6 +88,12 @@ def chat_payload(**overrides):
     }
     payload.update(overrides)
     return payload
+
+
+def chat_body(**overrides):
+    payload = chat_payload(**overrides)
+    payload.pop("tenant_id", None)
+    return ChatRequestBody(**payload)
 
 
 def rag_service():
@@ -225,9 +232,11 @@ async def test_chat_api_reads_classifier_from_app_state():
         router_service=RouterService(rag_tool=rag_service()),
     )
 
+    claims = UserClaims(user_id=None, tenant_id="tenant-a", role="member")
     response = await chat(
         request,
-        ChatRequestBody(**chat_payload()),
+        chat_body(),
+        claims=claims,
         chat_service=service,
     )
 
@@ -265,12 +274,8 @@ async def test_chat_api_prefers_trusted_request_tenant_over_body_tenant():
 
     response = await chat(
         request,
-        ChatRequestBody(
-            **chat_payload(
-                tenant_id="spoofed-tenant",
-                message="What does trusted tenant pricing cost?",
-            )
-        ),
+        chat_body(message="What does trusted tenant pricing cost?"),
+        claims=UserClaims(user_id=None, tenant_id="claim-tenant", role="member"),
         chat_service=service,
     )
 

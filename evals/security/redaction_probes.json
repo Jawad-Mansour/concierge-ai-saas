@@ -1,0 +1,29 @@
+[
+  {"recognizer": "EMAIL_ADDRESS", "message_template": "Please contact me at __PROBE__ when you have a moment.", "probe_format": "user{rand}@probe-{rand}.test"},
+  {"recognizer": "EMAIL_ADDRESS", "message_template": "Send the receipt to __PROBE__ and copy support.", "probe_format": "billing+{rand}@probe-{rand}.test"},
+  {"recognizer": "EMAIL_ADDRESS", "message_template": "Multiple emails: __PROBE__ and __PROBE2__.", "probe_format": "first+{rand}@probe.test", "probe2_format": "second+{rand}@probe.test"},
+
+  {"recognizer": "PHONE_NUMBER", "message_template": "Call me at __PROBE__ today.", "probe_format": "+1-555-{rand6}"},
+  {"recognizer": "PHONE_NUMBER", "message_template": "My number is __PROBE__.", "probe_format": "(555) 010-{rand4}"},
+  {"recognizer": "PHONE_NUMBER", "message_template": "Two numbers: __PROBE__ and __PROBE2__.", "probe_format": "+1-555-010-{rand4}", "probe2_format": "+44-20-7946-{rand4}"},
+
+  {"recognizer": "CREDIT_CARD", "message_template": "Charge card __PROBE__ for the invoice.", "probe_format": "4111-1111-1111-{rand4}"},
+  {"recognizer": "CREDIT_CARD", "message_template": "Stored card __PROBE__.", "probe_format": "5500 0000 0000 {rand4}"},
+  {"recognizer": "CREDIT_CARD", "message_template": "Two cards: __PROBE__ and __PROBE2__.", "probe_format": "4111111111111{rand3}", "probe2_format": "5500000000000{rand3}"},
+
+  {"recognizer": "US_SSN", "message_template": "SSN __PROBE__ for verification.", "probe_format": "{rand3}-{rand2}-{rand4}"},
+  {"recognizer": "US_SSN", "message_template": "Old SSN __PROBE__.", "probe_format": "{rand3}-{rand2}-{rand4}"},
+  {"recognizer": "US_SSN", "message_template": "Two SSNs: __PROBE__ and __PROBE2__.", "probe_format": "{rand3}-{rand2}-{rand4}", "probe2_format": "{rand3}-{rand2}-{rand4}"},
+
+  {"recognizer": "GENERIC_BEARER_TOKEN", "message_template": "Token: __PROBE__.", "probe_format": "eyJ{randb64_20}.{randb64_25}.{randb64_30}"},
+  {"recognizer": "GENERIC_BEARER_TOKEN", "message_template": "Use bearer __PROBE__ for the call.", "probe_format": "eyJ{randb64_20}.{randb64_25}.{randb64_30}"},
+  {"recognizer": "GENERIC_BEARER_TOKEN", "message_template": "Two tokens: __PROBE__ and __PROBE2__.", "probe_format": "eyJ{randb64_20}.{randb64_25}.{randb64_30}", "probe2_format": "eyJ{randb64_20}.{randb64_25}.{randb64_30}"},
+
+  {"recognizer": "HOSTED_LLM_API_KEY_ANTHROPIC", "message_template": "API key __PROBE__ was leaked.", "probe_format": "sk-ant-api03-{randb64_64}"},
+  {"recognizer": "HOSTED_LLM_API_KEY_ANTHROPIC", "message_template": "Use __PROBE__ for testing.", "probe_format": "sk-ant-api03-{randb64_64}"},
+  {"recognizer": "HOSTED_LLM_API_KEY_ANTHROPIC", "message_template": "Two anthropic keys: __PROBE__ and __PROBE2__.", "probe_format": "sk-ant-api03-{randb64_64}", "probe2_format": "sk-ant-api03-{randb64_64}"},
+
+  {"recognizer": "HOSTED_LLM_API_KEY_OPENAI", "message_template": "OpenAI key __PROBE__ rotated.", "probe_format": "sk-{randb64_48}"},
+  {"recognizer": "HOSTED_LLM_API_KEY_OPENAI", "message_template": "Use __PROBE__ for testing.", "probe_format": "sk-{randb64_48}"},
+  {"recognizer": "HOSTED_LLM_API_KEY_OPENAI", "message_template": "Two openai keys: __PROBE__ and __PROBE2__.", "probe_format": "sk-{randb64_48}", "probe2_format": "sk-{randb64_48}"}
+]

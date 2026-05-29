@@ -1,0 +1,7 @@
+# Owner: Jana
+# Minimum macro-F1 the shipped classifier artifact must clear on the held-out set.
+# Updated whenever DECISIONS.md records a new bake-off winner.
+
+# Placeholder pre-bake-off — once T036 publishes EVALS.md, raise to floor(bake_off_macro_f1 - 0.02)
+# so a small regression still trips the gate while letting the legitimate winner ship.
+macro_f1_min: 0.0

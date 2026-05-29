@@ -1,0 +1,6 @@
+[
+  {"message": "What are your business hours?", "expected_class": "FAQ", "confidence": 0.92},
+  {"message": "BUY CHEAP MEDS NOW!!! click http://spammy.example", "expected_class": "SPAM", "confidence": 0.98},
+  {"message": "I'm interested in pricing — can you call me at +1-555-0123?", "expected_class": "ACCOUNT_OPS", "confidence": 0.81},
+  {"message": "Can you compare your enterprise plan to the team plan, and tell me if the SLA covers EU data residency?", "expected_class": "HARD_QUESTION", "confidence": 0.77}
+]
