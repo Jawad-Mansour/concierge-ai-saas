@@ -6,9 +6,12 @@ from dataclasses import asdict
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, ConfigDict, Field
+from sqlalchemy.orm import Session
 
+from app.db import get_db
 from app.middleware.auth_middleware import UserClaims, oauth2_scheme
 from app.services.auth_service import verify_token
+from app.repositories import guardrails_repo
 from app.repositories.embedding_repo import EmbeddingChunk, InMemoryEmbeddingRepository
 from app.repositories.lead_repo import InMemoryLeadRepository
 from app.services.agent_service import (
@@ -134,6 +137,7 @@ async def chat(
     body: ChatRequestBody,
     claims: UserClaims = Depends(get_chat_user),
     chat_service: ChatService = Depends(build_chat_service),
+    db: Session = Depends(get_db),
 ):
     tenant_id = claims.tenant_id
     if not tenant_id:
@@ -154,7 +158,7 @@ async def chat(
                 guardrail_client,
                 tenant_id=tenant_id,
                 message=body.message,
-                tenant_config=None,
+                tenant_config=guardrails_repo.get_for_tenant(db, tenant_id) or {},
             )
             if reply.escalate:
                 return {
@@ -181,7 +185,7 @@ async def chat(
                 guardrail_client,
                 tenant_id=tenant_id,
                 llm_response=response.message,
-                tenant_config=None,
+                tenant_config=guardrails_repo.get_for_tenant(db, tenant_id) or {},
             )
             if decision.decision == "block":
                 response = type(response)(
