@@ -118,7 +118,9 @@ services:
 
   # ── Application Services ────────────────────────────────────
   backend:
-    build: ./backend
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
     depends_on:
       vault-init:
         condition: service_completed_successfully
@@ -131,6 +133,8 @@ services:
       VAULT_ADDR: http://vault:8200
       DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/concierge}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-replace-me}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-haiku-4-5-20251001}
     ports:
       - "${API_PORT:-8000}:8000"
     volumes:

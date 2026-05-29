@@ -251,6 +251,266 @@ gets rejected. CORS is defense-in-depth, not the boundary.
 - [x] Live update without restart (st.rerun() after save)
 - [x] Auth: real login form with JWT, session persists across refresh
 
+## Phase 6.1 — Guardrails config: backend + chat-path wiring
+
+- [x] Bootstrap gap: scripts/seed_platform.py creates the platform
+      tenant_manager via direct psycopg2 INSERT. Mohammad's
+      seed_tenants.py assumed this user existed but nothing created
+      it — fresh stacks 401'd on first provisioning call.
+- [x] Alembic infrastructure fix: backend/Dockerfile widens build
+      context to repo root so infra/postgres/migrations is COPYed
+      into the image. backend/entrypoint.sh bootstraps alembic_version
+      to 003 (init.sql baseline), then runs `alembic upgrade head`
+      before exec uvicorn. Workarounds documented in entrypoint.sh
+      comments: psycopg2 single-connection stamp (alembic 1.18
+      two-connection deadlock), version files copied to /tmp to
+      avoid alembic's overly-broad .py regex picking up env.py,
+      script_location patched to absolute paths.
+- [x] 004_guardrails_configs.py migration: tenant_id-keyed table
+      with RLS (tenant_isolation, tenant_write, tenant_update,
+      erase_isolation; FORCE row level security). Columns mirror
+      sidecar's TenantConfig schema.
+- [x] backend/app/repositories/guardrails_repo.py: get_for_tenant
+      with inline app.tenant_id set+reset (widget_repo pattern).
+- [x] backend/app/api/admin.py: GET/PUT /admin/guardrails-config,
+      tenant_admin-gated, Pydantic model mirrors sidecar contract.
+- [x] backend/app/api/chat.py: tenant_config=None placeholders
+      replaced with guardrails_repo.get_for_tenant(db, tenant_id).
+      Tenant rails now reach the sidecar on every chat turn.
+- [x] End-to-end validated: PUT escalation_trigger keyword "manager"
+      → chat "I want to speak to a manager" → response
+      {"decision": "escalate", "message": "I will flag this for
+      human follow-up."}. Full chain green.
+
+Mohammad shipped `widget_configs` and `guardrails_configs` in `init.sql` as
+stubs (`id`, `tenant_id`, `created_at` only) with a comment telling Charbel
+to add the rest. Phase 6.1 closes that gap end-to-end: schema, repo,
+backend endpoints, admin page, infrastructure fixes that surfaced along
+the way.
+
+### Infrastructure fixes (whole-team unblock)
+
+- [x] `scripts/seed_platform.py` — bootstrap the platform `tenant_manager`
+      (`manager@concierge.internal`) via direct psycopg2 INSERT.
+      `seed_tenants.py` assumes this user exists but nothing was creating
+      it — fresh stacks 401'd on the first provisioning call. Idempotent.
+- [x] `backend/Dockerfile` — widened build context to repo root so
+      `infra/postgres/migrations/` is COPYed into the image. Compose updated
+      with `build: {context: ., dockerfile: backend/Dockerfile}`.
+- [x] `backend/entrypoint.sh` — new file. Bootstraps `alembic_version`
+      to 003 (the init.sql baseline) via psycopg2 single-connection stamp
+      (alembic 1.18 two-connection stamp deadlocks under our setup).
+      Copies migrations to `/tmp/alembic_versions/` (alembic's `.*\.py`
+      regex was picking up `env.py` and crashing). Patches `script_location`
+      to absolute paths. Runs `alembic upgrade head` before exec'ing
+      uvicorn. Alembic was never actually running before this — init.sql
+      was the only schema source. Now migrations 004 and 005 run on every
+      backend boot.
+### Migrations (Charbel's tables)
+
+- [x] `infra/postgres/migrations/004_guardrails_configs.py` — new table:
+      `tenant_id UUID` PK with FK to tenants ON DELETE CASCADE,
+      `allowed_topics TEXT[]`, `refusal_persona JSONB`,
+      `escalation_triggers JSONB`, `created_at` + `updated_at`.
+      RLS policies: `tenant_isolation` (SELECT), `tenant_write` (INSERT),
+      `tenant_update` (UPDATE), `erase_isolation` (DELETE).
+      `FORCE ROW LEVEL SECURITY` so the table owner doesn't bypass.
+- [x] `infra/postgres/migrations/005_widget_config_columns.py` —
+      adds the columns Mohammad stubbed: `widget_id UUID UNIQUE` (the
+      public identifier in the embed script), `allowed_origins TEXT[]`,
+      `theme JSONB`, `greeting TEXT`, `enabled_tools TEXT[]`, `updated_at`.
+      All with sensible defaults so existing rows survive the migration.
+      Also adds the two missing RLS policies `tenant_write` and
+      `tenant_update` that 001/002/003 never installed — admin PUT
+      upserts would have failed under FORCE RLS even on installs where
+      002/003 ran. Idempotent `CREATE POLICY` via DO/EXCEPTION block.
+### Backend (FastAPI)
+
+- [x] `backend/app/repositories/guardrails_repo.py` — `get_for_tenant`
+      reads the row using the same inline `app.tenant_id` set/reset
+      pattern as `widget_repo`. Returns `None` when no config exists.
+- [x] `backend/app/api/admin.py` — three new endpoints, all
+      `tenant_admin`-gated via `get_tenant_db`:
+        - `GET  /admin/guardrails-config` — returns the tenant's config.
+        - `PUT  /admin/guardrails-config` — upsert, Pydantic body mirrors
+          the sidecar's `TenantConfig` schema exactly (extra="forbid"
+          on the sidecar side so we can't drift).
+        - `POST /admin/guardrails-config/test` — proxy. Loads the
+          caller's stored config via `guardrails_repo`, forwards to the
+          sidecar through the existing `app.state.guardrail_client`
+          (reuses `screen_input`'s call shape, no new HTTP client, no
+          re-fetch of the service credential). Returns the sidecar's
+          raw `GuardrailDecision` JSON. 503 if `guardrail_client` is
+          `None`.
+- [x] `backend/app/api/chat.py` — replaced the `tenant_config=None`
+      placeholders on lines 157 and 184 with
+      `guardrails_repo.get_for_tenant(db, tenant_id) or {}`. Added
+      `db: Session = Depends(get_db)` to the signature. Tenant rails
+      now reach the sidecar on every chat turn — they were dead before.
+### Admin UI (Streamlit)
+
+- [x] `admin/pages/guardrails_config.py` — replaces the
+      `_coming_soon_guardrails` stub. Three sections:
+        - **Current config** — read-only display of allowed_topics,
+          refusal_persona (voice + template), escalation triggers, with
+          sensible captions for empty/null fields.
+        - **Edit config** — allowed_topics textarea (one per line),
+          voice + template inputs with live `.format(topic=..., reason=...)`
+          preview that catches `KeyError`/`IndexError`/`ValueError` and
+          shows an inline error on malformed templates. Dynamic
+          escalation_triggers list backed by `st.session_state["gc_triggers"]`
+          with selectbox kind / text_input value / × remove button per
+          row, plus an "+ Add trigger" button. Save assembles the
+          payload with `None` for empty sections (matches the sidecar's
+          `Optional` schema fields).
+        - **Test this config** — text input + Run check button POSTs
+          to `/admin/guardrails-config/test`. Renders the response with
+          colour: green container for `decision: pass`, red container
+          for `decision: block` with `rule_name` highlighted.
+- [x] Persistent banner feedback on Save — both `widget_config.py` and
+      `guardrails_config.py` use a `session_state` flash pattern
+      (`wc_flash` / `gc_flash`) that renders the success/error message
+      at the TOP of the next render. Replaces the silent
+      `st.success → st.rerun` pattern that wiped feedback before the
+      user saw it. Banner persists until the user interacts again.
+- [x] `admin/streamlit_app.py` — guardrails entry moved from "Coming
+      soon" to "Configuration" with `:material/shield:` icon. Removed
+      the misleading "Toggle theme: ☰ → Settings" caption (current
+      Streamlit version has no Settings entry in the hamburger menu).
+### End-to-end verified
+
+PUT `escalation_trigger` keyword `"manager"` via admin UI →
+chat `"I want to speak to a manager"` from widget visitor →
+backend loads tenant config from DB → forwards to sidecar →
+sidecar matches the trigger → returns `decision=block, action=escalate` →
+chat handler short-circuits with `{"decision": "escalate", "message":
+"I will flag this for human follow-up."}`. The full chain fires before
+the LLM stub layer is even reached.
+
+Test panel produces identical sidecar responses to the live chat path.
+
+Pre-demo dress rehearsal surfaced four real bugs across the stack.
+Three were on Charbel's slice and got fixed; one was on Ali's slice
+and got patched cooperatively to unblock the demo.
+
+### Bugs found and fixed
+
+- [x] `demo/host/public/index.html` — hardcoded `data-widget-id`
+      mismatched Acme's real widget_id after fresh seed. Swapped
+      manually; demo-host required `docker compose build --no-cache`
+      because the cached layer kept the old value.
+- [x] `backend/app/api/widget_js.py` — the `/widget.js` loader read
+      `data-widget-id` from the script tag correctly but didn't pass
+      it into the iframe. The iframe src was hardcoded to
+      `http://localhost:8081/`. Result: the widget container loaded
+      its own bundle (with its own hardcoded widget_id in App.tsx)
+      and ignored the embedding page entirely. Fixed: loader now
+      appends `?widget_id=<encoded>` to the iframe URL.
+- [x] `widget/src/App.tsx` — React widget had a hardcoded constant
+      `const WIDGET_ID = '042016b1-...'`. Replaced with
+      `new URLSearchParams(window.location.search).get('widget_id')`.
+      The widget now mounts with whatever widget_id the parent page
+      passes via the iframe URL. `widget/src/auth.ts` was already
+      parameterized correctly — no changes needed there.
+- [x] `docker-compose.yml` — backend container had no
+      `ANTHROPIC_API_KEY` in its environment, despite the host having
+      it in `.env`. Mohammad's pattern routes secrets via Vault, but
+      `AnthropicAgentPlanner` uses `os.getenv()` directly. Added
+      `ANTHROPIC_API_KEY` and `ANTHROPIC_MODEL` env passthrough so
+      the agent planner can authenticate. Acceptable demo-time
+      shortcut; the cleaner fix is to read from Vault in the planner
+      (followup for after Friday).
+
+### Cross-slice fix (coordinated with Ali)
+
+- [x] `backend/app/services/agent_service.py` — `AnthropicAgentPlanner`
+      was crashing two ways: (a) defaulted to `claude-3-5-haiku-latest`
+      which was retired Feb 19, 2026; (b) used plain JSON-in-text
+      prompting, but newer Claude models wrap responses in prose so
+      `json.loads()` crashes. Switched to Anthropic tool-use API with
+      a `plan_action` tool schema — Claude returns structured JSON
+      natively in `content[].input`, no parsing required. Updated
+      test fixture in `test_agent_tools.py` to match the new response
+      shape. Default model bumped to `claude-haiku-4-5-20251001`.
+
+### End-to-end verified at demo dress rehearsal
+
+- [x] Two tenants seeded (acme-coffee, brew-bar). Each has separate
+      widget config, guardrails config, allowed origins, JWTs.
+- [x] Tenant admin sees only their own tenant's data (Phase 2 cross-
+      tenant isolation check passed manually).
+- [x] Widget loads on `localhost:8080` (allowed host), blocked on
+      `localhost:8090` (CSP violation in DevTools console).
+- [x] All three live widget messages produce correct behavior:
+      - "tell me about your coffee" → real Claude response, stays on
+        topic, passes output rail.
+      - "I want to speak to a manager" → escalation_trigger fires
+        pre-LLM, response: "I will flag this for human follow-up."
+      - "What is the weather today?" → off_topic rule fires pre-LLM,
+        response uses the tenant's persona template:
+        "I can only help with coffee, espresso, beans. That falls
+         outside what I can answer here."
+- [x] Defense-in-depth: even when the agent (or its stub) returns
+      off-topic content, the output rail catches it. Same allowed_topics
+      policy guards both input and output paths.
+
+## Phase 6.3 — Real LLM end-to-end (Fri 2026-05-29, late night)
+
+After the dress rehearsal at 11pm, the team agreed to fix the agent
+LLM path so the chat reply is grounded in tenant content rather than
+falling through to stubs. Three coupled bugs surfaced and got fixed.
+
+### Bugs found and fixed
+
+- [x] `AnthropicAgentPlanner` defaulted to `claude-3-5-haiku-latest`
+      (retired Feb 19, 2026, returns 404). Bumped default to
+      `claude-haiku-4-5-20251001`.
+- [x] `AnthropicAgentPlanner` used plain JSON-in-text prompting.
+      Newer Claude models wrap structured output in prose, so
+      `json.loads()` crashed. Switched to Anthropic tool-use API
+      with a `plan_action` tool schema — Claude returns structured
+      JSON natively in `content[].input`, no parsing.
+- [x] `AnthropicAgentPlanner._user_prompt` didn't include tool call
+      results. So when Claude picked `rag_search` then tried to
+      compose `final_response`, it had no content to reference and
+      produced generic replies that failed `screen_output`. Fixed:
+      tool results (RAG `answer_context`, lead/escalation status)
+      now appended to the user prompt before the second iteration.
+- [x] `AgentService.run` crashed with 500 when a tool's own
+      validation failed (e.g. `capture_lead` called without email
+      or phone). Wrapped tool calls in defensive try/except:
+      validation failures are now reported as tool-result feedback
+      so the planner can recover gracefully, ask the visitor for
+      missing info, or pick a different tool.
+- [x] `InMemoryEmbeddingRepository` in `chat.py` had one hardcoded
+      chunk with `tenant_id="demo-tenant"` — no real tenant ever
+      matched. Replaced with per-tenant seed (two coffee chunks for
+      acme-coffee, two tea chunks for brew-bar) keyed by real
+      tenant UUIDs read from the DB at startup. Falls back to the
+      original demo chunk if DB lookup fails.
+- [x] `docker-compose.yml` — passed `ANTHROPIC_API_KEY` and
+      `ANTHROPIC_MODEL` through to backend container.
+      `AnthropicAgentPlanner` reads from `os.getenv`. Mohammad's
+      Vault pattern still holds the canonical secret; the env
+      passthrough is a demo-time shortcut, noted as a followup.
+
+### Verified end-to-end
+
+- pytest 42/42 green (test_agent_tools + test_chat)
+- acme-coffee live widget flow:
+    - "tell me about your coffee" → real Claude response mentioning
+      espresso/Ethiopia/Colombia from the seeded chunks
+    - "tell me about your beans" → real Claude response mentioning
+      medium-roast/cold brew/French press
+    - "I want to speak to a manager" → escalation pre-LLM
+    - "What is the weather today?" → off_topic refusal pre-LLM
+- brew-bar live widget flow:
+    - "tell me about your tea" → tea-specific response (jasmine,
+      oolong, chai, earl grey). No coffee content. Cross-tenant
+      isolation confirmed at the content layer.
+- Test cases that previously crashed with 500 now return 200 with
+  graceful planner recovery.
+
 ## Phase 7 — Friday demo polish
 
 - [ ] Update `deliverables/RUNBOOK.md` §6 with the demo script
@@ -366,3 +626,55 @@ gets rejected. CORS is defense-in-depth, not the boundary.
   test client and guardrails container (added env pass-through),
   invalid probe formats in Jana's redaction test (hex chars where
   digits required). 7/7 green. PR open.
+- Built guardrails config: migration 004 with RLS, repo, admin
+  endpoints (GET/PUT), wired chat.py to load tenant config from DB
+  on every turn. Closed two infra gaps along the way: alembic was
+  never actually running at backend startup (init.sql was the
+  only schema source), and seed_tenants.py needed a bootstrap
+  tenant_manager that nothing created. End-to-end demo working:
+  admin edits config in DB → chat behavior changes live.
+- Morning: investigated yesterday's CI failures on the fix-tests branch.
+  Root cause: httpx in [dependency-groups] dev instead of [project]
+  dependencies — backend Dockerfile uses `uv sync --no-dev` so httpx
+  was missing when classifier_client.py imported it. Fixed
+  backend/pyproject.toml + regenerated uv.lock. Same misconfig broke
+  security-gates redaction test (bcrypt missing from CI install set).
+  Fixed security-gates.yml to use `uv sync --frozen` instead of ad-hoc
+  pip. Added GUARDRAILS_SERVICE_CREDENTIAL env to the right step.
+  Fixed smoke-test localhost:8002/health → /healthz. Updated
+  test_ci_smoke and test_redaction probes (PHONE/SSN/CC had bad chars;
+  CC needed Luhn-valid). All 7 CI checks green, merged to main.
+
+- Afternoon: started feature/guardrails-config-ui.
+  Built migration 004 (guardrails_configs + RLS) using Mohammad's
+  pattern with FORCE row level security. Repo + admin endpoints
+  (GET/PUT/test) tenant_admin-gated. Wired chat.py to load tenant
+  config from DB on every turn — tenant rails were dead before.
+  Hit two infra gaps: alembic was never running at backend boot
+  (init.sql was the only schema source), and seed_tenants.py needed
+  a platform tenant_manager that nothing created. Built entrypoint.sh
+  to bootstrap alembic_version and run upgrade head; wrote
+  seed_platform.py for the manager bootstrap. Alembic now runs on
+  every boot — whole-team unblock for future migrations.
+
+- Late afternoon: discovered widget-config was 500'ing. Mohammad's
+  init.sql had widget_configs as a stub with a literal `-- Charbel:
+  add columns` comment — the schema my endpoints assumed never
+  existed. Wrote migration 005 adding widget_id, allowed_origins,
+  theme, greeting, enabled_tools, updated_at, plus the missing
+  tenant_write and tenant_update RLS policies. Verified widget auth
+  still round-trips with the new auto-generated widget_id column.
+
+- Evening: built admin/pages/guardrails_config.py (current config,
+  edit form with live template preview, test panel that proxies to
+  the sidecar). End-to-end verified — PUT keyword 'manager' → chat
+  'I want to speak to a manager' → response decision=escalate. Demo
+  story for tenant rails is real and live.
+
+- Polish pass: persistent banner pattern (session_state flash) on
+  both widget_config and guardrails_config — replaces the silent
+  st.toast/st.success+st.rerun that users couldn't see. Fixed the
+  template preview to substitute both {topic} and {reason}. Empty
+  payload sections now send None instead of [] to match the sidecar's
+  Optional schema. Removed misleading theme toggle caption.
+```

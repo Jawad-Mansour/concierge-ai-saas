@@ -22,6 +22,15 @@ cp .env.example .env
 docker compose up
 ```
 
+## First-run seeding
+
+After `docker compose up -d`:
+
+```bash
+uv run --with "psycopg2-binary,bcrypt" python scripts/seed_platform.py
+uv run --with requests python scripts/seed_tenants.py
+```
+
 ## Team
 
 | Person   | Slice                                      |
