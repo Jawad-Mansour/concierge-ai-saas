@@ -53,6 +53,20 @@ class ChatRequestBody(BaseModel):
     trace_id: str | None = None
 
 
+def tenant_id_from_request(request: Request, fallback_tenant_id: str) -> str:
+    for source in (getattr(request, "state", None), request.app.state):
+        if source is None:
+            continue
+        tenant_id = getattr(source, "tenant_id", None)
+        if tenant_id:
+            return str(tenant_id)
+        claims = getattr(source, "claims", None)
+        tenant_id = getattr(claims, "tenant_id", None)
+        if tenant_id:
+            return str(tenant_id)
+    return fallback_tenant_id
+
+
 def build_chat_service(*, db=None) -> ChatService:
     rag_service = build_pgvector_rag_service(db) if db is not None else build_rag_service()
     lead_service = LeadService(repository=InMemoryLeadRepository())
@@ -116,19 +130,22 @@ async def chat(
     chat_service: ChatService = Depends(get_chat_service),
 ):
     try:
+        tenant_id = tenant_id_from_request(request, body.tenant_id)
+        payload = body.model_dump()
+        payload["tenant_id"] = tenant_id
         classifier_client = getattr(request.app.state, "classifier_client", None)
         guardrail_client = getattr(request.app.state, "guardrail_client", None)
         classification = None
         if classifier_client is not None:
             classification = await classifier_client.classify(
-                tenant_id=body.tenant_id,
+                tenant_id=tenant_id,
                 message=body.message,
             )
 
         if screen_input is not None and guardrail_client is not None:
             decision, reply = await screen_input(
                 guardrail_client,
-                tenant_id=body.tenant_id,
+                tenant_id=tenant_id,
                 message=body.message,
                 tenant_config=None,
             )
@@ -148,14 +165,14 @@ async def chat(
                 }
 
         response = chat_service.handle_message(
-            body.model_dump(),
+            payload,
             classification=classification,
         )
 
         if screen_output is not None and guardrail_client is not None:
             decision, reply = await screen_output(
                 guardrail_client,
-                tenant_id=body.tenant_id,
+                tenant_id=tenant_id,
                 llm_response=response.message,
                 tenant_config=None,
             )

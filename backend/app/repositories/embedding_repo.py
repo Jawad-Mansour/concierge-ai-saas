@@ -143,7 +143,10 @@ class InMemoryVectorEmbeddingRepository:
             self.add_chunk(chunk)
 
     def add_chunk(self, chunk: EmbeddingChunk) -> None:
-        embedding = chunk.embedding or self.embedding_provider.embed_text(chunk.text)
+        embedding = chunk.embedding or self.embedding_provider.embed_text(
+            chunk.text,
+            tenant_id=chunk.tenant_id,
+        )
         self.chunks.append(
             EmbeddingChunk(
                 chunk_id=chunk.chunk_id,
@@ -168,7 +171,7 @@ class InMemoryVectorEmbeddingRepository:
         top_k: int,
         filters: dict[str, str | bool] | None = None,
     ) -> list[RetrievedChunk]:
-        query_embedding = self.embedding_provider.embed_text(query)
+        query_embedding = self.embedding_provider.embed_text(query, tenant_id=tenant_id)
         scored: list[RetrievedChunk] = []
         for chunk in self.chunks:
             if chunk.tenant_id != tenant_id:
@@ -202,7 +205,10 @@ class PgVectorEmbeddingRepository:
         self.embedding_provider = embedding_provider
 
     def add_chunk(self, chunk: EmbeddingChunk) -> None:
-        embedding = chunk.embedding or self.embedding_provider.embed_text(chunk.text)
+        embedding = chunk.embedding or self.embedding_provider.embed_text(
+            chunk.text,
+            tenant_id=chunk.tenant_id,
+        )
         self.db.execute(
             text("""
                 INSERT INTO embeddings (
@@ -247,7 +253,7 @@ class PgVectorEmbeddingRepository:
         top_k: int,
         filters: dict[str, str | bool] | None = None,
     ) -> list[RetrievedChunk]:
-        query_embedding = self.embedding_provider.embed_text(query)
+        query_embedding = self.embedding_provider.embed_text(query, tenant_id=tenant_id)
         where_clauses = ["tenant_id = :tenant_id"]
         params: dict[str, object] = {
             "tenant_id": tenant_id,

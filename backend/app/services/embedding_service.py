@@ -97,7 +97,10 @@ class EmbeddingService:
         if self.embedding_repository is not None:
             for chunk in chunks:
                 embedding = chunk.embedding or (
-                    self.embedding_provider.embed_text(chunk.text)
+                    self.embedding_provider.embed_text(
+                        chunk.text,
+                        tenant_id=chunk.tenant_id,
+                    )
                     if self.embedding_provider is not None
                     else None
                 )
@@ -143,7 +146,10 @@ class EmbeddingService:
                     locale=content.locale,
                     published=content.published,
                     embedding=(
-                        self.embedding_provider.embed_text(text)
+                        self.embedding_provider.embed_text(
+                            text,
+                            tenant_id=content.tenant_id,
+                        )
                         if self.embedding_provider is not None
                         else None
                     ),

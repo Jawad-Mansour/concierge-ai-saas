@@ -22,8 +22,20 @@ class EmbeddingRequestError(EmbeddingProviderError):
 
 
 class EmbeddingProvider(Protocol):
-    def embed_text(self, text: str) -> list[float]:
+    def embed_text(self, text: str, *, tenant_id: str | None = None) -> list[float]:
         """Return one embedding vector for the supplied text."""
+
+
+class EmbeddingCostTracker(Protocol):
+    def record_embedding_call(
+        self,
+        *,
+        tenant_id: str | None,
+        provider: str,
+        model: str,
+        input_count: int,
+    ) -> None:
+        """Record one hosted embedding request for tenant cost attribution."""
 
 
 class HashingEmbeddingProvider:
@@ -34,7 +46,7 @@ class HashingEmbeddingProvider:
             raise ValueError("dimensions must be positive")
         self.dimensions = dimensions
 
-    def embed_text(self, text: str) -> list[float]:
+    def embed_text(self, text: str, *, tenant_id: str | None = None) -> list[float]:
         vector = [0.0] * self.dimensions
         for token in text.lower().split():
             digest = hashlib.sha256(token.encode("utf-8")).digest()
@@ -58,15 +70,17 @@ class VoyageEmbeddingProvider:
         model: str | None = None,
         timeout_seconds: int = 20,
         post_json=None,
+        cost_tracker: EmbeddingCostTracker | None = None,
     ) -> None:
         self.api_key = api_key or os.getenv("VOYAGE_API_KEY")
         self.model = model or os.getenv("EMBEDDINGS_MODEL", "voyage-3.5")
         self.timeout_seconds = timeout_seconds
         self.post_json = post_json or self._post_json
+        self.cost_tracker = cost_tracker
         if not self.api_key:
             raise EmbeddingConfigurationError("VOYAGE_API_KEY is not configured")
 
-    def embed_text(self, text: str) -> list[float]:
+    def embed_text(self, text: str, *, tenant_id: str | None = None) -> list[float]:
         response = self.post_json(
             self.API_URL,
             {"model": self.model, "input": [text]},
@@ -76,6 +90,13 @@ class VoyageEmbeddingProvider:
             },
             self.timeout_seconds,
         )
+        if self.cost_tracker is not None:
+            self.cost_tracker.record_embedding_call(
+                tenant_id=tenant_id,
+                provider="voyage",
+                model=self.model,
+                input_count=1,
+            )
         try:
             embedding = response["data"][0]["embedding"]
             return [float(value) for value in embedding]

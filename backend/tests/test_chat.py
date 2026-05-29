@@ -62,8 +62,14 @@ class FixedRagAnswerGenerator:
     def __init__(self):
         self.calls = []
 
-    def generate(self, *, question, contexts):
-        self.calls.append({"question": question, "contexts": contexts})
+    def generate(self, *, question, contexts, tenant_id=None):
+        self.calls.append(
+            {
+                "question": question,
+                "contexts": contexts,
+                "tenant_id": tenant_id,
+            }
+        )
         return "Synthesized answer from retrieved context."
 
 
@@ -145,6 +151,7 @@ def test_chat_synthesizes_rag_answer_from_retrieved_context():
         {
             "question": "What does the team plan cost?",
             "contexts": ["Team pricing starts at 49 dollars per month."],
+            "tenant_id": "tenant-a",
         }
     ]
 
@@ -227,6 +234,50 @@ async def test_chat_api_reads_classifier_from_app_state():
     assert response["decision"] == "rag"
     assert classifier.calls == [
         {"tenant_id": "tenant-a", "message": "What does the team plan cost?"}
+    ]
+
+
+@pytest.mark.anyio
+async def test_chat_api_prefers_trusted_request_tenant_over_body_tenant():
+    classifier = AsyncClassifierClient(JanaClassification("FAQ", 0.91))
+    request = SimpleNamespace(
+        state=SimpleNamespace(tenant_id="trusted-tenant"),
+        app=SimpleNamespace(state=SimpleNamespace(classifier_client=classifier)),
+    )
+    service = ChatService(
+        memory_service=memory_service(),
+        router_service=RouterService(
+            rag_tool=RagService(
+                InMemoryEmbeddingRepository(
+                    [
+                        EmbeddingChunk(
+                            chunk_id="trusted-pricing",
+                            tenant_id="trusted-tenant",
+                            cms_content_id="trusted-cms",
+                            title="Trusted Pricing",
+                            text="Trusted tenant pricing is 75 dollars per month.",
+                        )
+                    ]
+                )
+            )
+        ),
+    )
+
+    response = await chat(
+        request,
+        ChatRequestBody(
+            **chat_payload(
+                tenant_id="spoofed-tenant",
+                message="What does trusted tenant pricing cost?",
+            )
+        ),
+        chat_service=service,
+    )
+
+    assert response["decision"] == "rag"
+    assert response["message"] == "Trusted tenant pricing is 75 dollars per month."
+    assert classifier.calls == [
+        {"tenant_id": "trusted-tenant", "message": "What does trusted tenant pricing cost?"}
     ]
 
 

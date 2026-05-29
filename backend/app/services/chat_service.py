@@ -152,6 +152,7 @@ class ChatService:
                 return self.rag_answer_generator.generate(
                     question=request.message,
                     contexts=rag_context,
+                    tenant_id=request.tenant_id,
                 )
             return rag_context[0]
         if decision == "agent":

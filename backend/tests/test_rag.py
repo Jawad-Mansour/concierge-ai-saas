@@ -12,6 +12,7 @@ from app.services.embedding_service import (
     IngestionValidationError,
 )
 from app.services.embedding_provider import HashingEmbeddingProvider, VoyageEmbeddingProvider
+from app.services.rag_answer_service import AnthropicRagAnswerGenerator
 from app.services.rag_service import (
     CrossTenantRetrievalError,
     RagService,
@@ -223,6 +224,71 @@ def test_voyage_embedding_provider_uses_voyage_api(monkeypatch):
     assert calls[0][0] == "https://api.voyageai.com/v1/embeddings"
     assert calls[0][1] == {"model": "voyage-3.5", "input": ["sample tenant text"]}
     assert calls[0][2]["authorization"] == "Bearer test-voyage-key"
+
+
+def test_voyage_embedding_provider_records_cost(monkeypatch):
+    class CostTracker:
+        def __init__(self):
+            self.calls = []
+
+        def record_embedding_call(self, **kwargs):
+            self.calls.append(kwargs)
+
+    monkeypatch.setenv("VOYAGE_API_KEY", "test-voyage-key")
+    cost_tracker = CostTracker()
+    provider = VoyageEmbeddingProvider(
+        model="voyage-3.5",
+        post_json=lambda *_args: {"data": [{"embedding": [0.1, 0.2]}]},
+        cost_tracker=cost_tracker,
+    )
+
+    provider.embed_text("sample tenant text", tenant_id="tenant-a")
+
+    assert cost_tracker.calls == [
+        {
+            "tenant_id": "tenant-a",
+            "provider": "voyage",
+            "model": "voyage-3.5",
+            "input_count": 1,
+        }
+    ]
+
+
+def test_anthropic_rag_answer_generator_records_usage(monkeypatch):
+    class CostTracker:
+        def __init__(self):
+            self.calls = []
+
+        def record_llm_call(self, **kwargs):
+            self.calls.append(kwargs)
+
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-anthropic-key")
+    cost_tracker = CostTracker()
+    generator = AnthropicRagAnswerGenerator(
+        model="test-claude",
+        post_json=lambda *_args: {
+            "content": [{"text": "Generated answer."}],
+            "usage": {"input_tokens": 42, "output_tokens": 7},
+        },
+        cost_tracker=cost_tracker,
+    )
+
+    answer = generator.generate(
+        question="What are the hours?",
+        contexts=["Open Monday through Friday."],
+        tenant_id="tenant-a",
+    )
+
+    assert answer == "Generated answer."
+    assert cost_tracker.calls == [
+        {
+            "tenant_id": "tenant-a",
+            "provider": "anthropic",
+            "model": "test-claude",
+            "input_tokens": 42,
+            "output_tokens": 7,
+        }
+    ]
 
 
 def test_ingest_cms_content_rejects_unknown_or_empty_fields():
