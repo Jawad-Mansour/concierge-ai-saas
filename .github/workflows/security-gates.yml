@@ -21,8 +21,10 @@ on:
 
 jobs:
   classifier-security-gates:
-    name: Classifier security gates (Principle VIII)
+    name: classifier-security-gates
     runs-on: ubuntu-latest
+    env:
+      GUARDRAILS_SERVICE_CREDENTIAL: test-token
     steps:
       - uses: actions/checkout@v4
 
@@ -55,7 +57,7 @@ jobs:
           pytest -x modelserver/tests/test_hash_mismatch_boot.py
 
   guardrails-security-gates:
-    name: Guardrails security gates (Principle VIII)
+    name: guardrails-security-gates
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -101,6 +103,8 @@ jobs:
           pytest -x guardrails/tests/test_redaction.py guardrails/tests/test_no_pii_in_spans.py guardrails/tests/test_span_attrs.py
 
       - name: Build guardrails image + stand up sidecar
+        env:
+          GUARDRAILS_SERVICE_CREDENTIAL: test-token
         run: |
           docker compose build guardrails
           docker compose up -d vault vault-init guardrails otel-collector || docker compose up -d vault vault-init guardrails
@@ -115,9 +119,10 @@ jobs:
           GUARDRAILS_URL: http://localhost:8002
           GUARDRAILS_SERVICE_CREDENTIAL: test-token
         run: |
-          pip install -e 'evals/security/'
-          pip install psycopg2-binary
-          pytest -x backend/tests/test_redaction.py
+          pip install uv==0.5.4
+          cd backend && uv sync --frozen
+          uv pip install -e ../evals/security/
+          uv run pytest -x tests/test_redaction.py
 
       - name: Red-team probes — injection + cross-tenant + redaction
         env:
@@ -131,3 +136,18 @@ jobs:
           GUARDRAILS_SERVICE_CREDENTIAL: test-token
         run: |
           python evals/security/latency_probe.py --url http://localhost:8002 --token "$GUARDRAILS_SERVICE_CREDENTIAL" --concurrency 16 --requests 200 --p95-budget-ms 100
+
+  security-gates:                             # ← NEW summary job
+    name: security-gates
+    runs-on: ubuntu-latest
+    needs: [classifier-security-gates, guardrails-security-gates]
+    if: always()
+    steps:
+      - name: Verify both gates passed
+        run: |
+          if [[ "${{ needs.classifier-security-gates.result }}" != "success" || \
+                "${{ needs.guardrails-security-gates.result }}" != "success" ]]; then
+            echo "One or more security gates failed"
+            exit 1
+          fi
+          echo "All security gates passed"

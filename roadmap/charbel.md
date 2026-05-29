@@ -145,6 +145,30 @@ PR link or commit SHA in the trailing parenthesis.
 - Mohammad's test_tenant_isolation.py also fails same way.
 - Smoke test should now pass on CI since modelserver is healthy.
 
+## Phase 2.4 — Fix CI on fix-tests (continued) + ship to main
+
+- [x] backend/pyproject.toml: moved httpx from [dependency-groups] dev
+      to [project] dependencies — classifier_client imports it at module
+      level, so it's runtime, not test-only.
+- [x] backend/uv.lock: regenerated against corrected pyproject.
+- [x] backend/Dockerfile: untouched — `--no-dev` flag is correct now.
+- [x] .github/workflows/security-gates.yml: replaced ad-hoc
+      `pip install psycopg2-binary` with `cd backend && uv sync --frozen`
+      so all backend runtime deps land for the redaction test. Added
+      job-level + step-level GUARDRAILS_SERVICE_CREDENTIAL=test-token.
+- [x] .github/workflows/smoke-test.yml: corrected guardrails health URL
+      to /healthz (matches Jana's contract).
+- [x] docker-compose.yml: added GUARDRAILS_SERVICE_CREDENTIAL pass-through
+      to guardrails service with :- default — local dev unchanged, CI
+      gets the override.
+- [x] backend/tests/test_ci_smoke.py: test_guardrails_health updated for
+      /healthz + new response shape (rails_version, no service field).
+- [x] backend/tests/test_redaction.py: fixed _generate_probe so PHONE,
+      SSN, CC probes match Presidio recognizers (digit-only segments,
+      Luhn-valid PAN).
+- [x] All 7 CI checks green on fix-tests.
+- [x] PR opened to merge fix-tests → main.
+
 ## Phase 3 — CI pipeline skeleton
 
 Goal: pipeline green before there's anything real to gate. Owners
@@ -330,3 +354,15 @@ gets rejected. CORS is defense-in-depth, not the boundary.
 - Fixed Jana's fix-tests branch: PyJWT in evals/security,
   setuptools in guardrails, opentelemetry try/except in main.py,
   Vault path fix in deps.py. Guardrails healthy. 90/0 tests.
+- Spent the morning unwrapping fix-tests. Root cause of yesterday's
+  smoke failure: httpx in wrong pyproject section (dev group, not
+  runtime). Backend Dockerfile correctly excludes dev → no httpx →
+  classifier_client crashes on import → backend never boots. Same
+  pyproject misconfiguration broke security-gates redaction test
+  (bcrypt missing from CI install set).
+- Fixed httpx + reworked security-gates to use uv sync against the
+  backend project. Then a cascade of smaller things: wrong health URL
+  in smoke (`/health` vs `/healthz`), credential mismatch between
+  test client and guardrails container (added env pass-through),
+  invalid probe formats in Jana's redaction test (hex chars where
+  digits required). 7/7 green. PR open.

@@ -81,7 +81,7 @@ jobs:
         run: |
           curl -sf http://localhost:8000/health
           curl -sf http://localhost:8001/health
-          curl -sf http://localhost:8002/health
+          curl -sf http://localhost:8002/healthz
 
       - name: Set up uv
         uses: astral-sh/setup-uv@v4

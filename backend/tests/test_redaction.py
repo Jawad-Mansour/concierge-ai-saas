@@ -35,11 +35,12 @@ pytestmark = pytest.mark.skipif(
 
 def _generate_probe(recognizer: str) -> str:
     rnd = secrets.token_hex(16)
+    digits = "".join(secrets.choice("0123456789") for _ in range(16))
     builders = {
         "EMAIL_ADDRESS": f"probe{rnd}@probe-{rnd}.test",
-        "PHONE_NUMBER": f"+1-555-{rnd[:3]}-{rnd[3:7]}",
-        "CREDIT_CARD": f"4111-1111-1111-{rnd[:4]}",
-        "US_SSN": f"{rnd[:3]}-{rnd[3:5]}-{rnd[5:9]}",
+        "PHONE_NUMBER": f"+1-555-{digits[:3]}-{digits[3:7]}",
+        "CREDIT_CARD": "4111-1111-1111-1111",
+        "US_SSN": f"{digits[:3]}-{digits[3:5]}-{digits[5:9]}",
         "GENERIC_BEARER_TOKEN": f"eyJ{rnd}abc.{rnd}def.{rnd}ghi",
         "HOSTED_LLM_API_KEY_ANTHROPIC": f"sk-ant-api03-{rnd}{rnd}",
         "HOSTED_LLM_API_KEY_OPENAI": f"sk-{rnd}{rnd}",
