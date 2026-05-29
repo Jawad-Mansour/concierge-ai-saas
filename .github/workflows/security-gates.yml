@@ -116,6 +116,7 @@ jobs:
           GUARDRAILS_SERVICE_CREDENTIAL: test-token
         run: |
           pip install -e 'evals/security/'
+          pip install -e 'backend/[dev]'
           pytest -x backend/tests/test_redaction.py
 
       - name: Red-team probes — injection + cross-tenant + redaction
