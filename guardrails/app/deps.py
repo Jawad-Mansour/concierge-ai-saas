@@ -2,9 +2,8 @@
 """Vault credential bootstrap + FastAPI auth dependency.
 
 Vault KV v2 path:
-    secret/data/guardrails/service_credential
-
-TBD: confirm against `infra/vault/policies/` (Mohammad) before merging.
+    secret/data/concierge/service_auth  (field: token)
+    Matches infra/vault/seed.sh — same credential shared by all Python services.
 """
 from __future__ import annotations
 
@@ -19,7 +18,7 @@ from .telemetry import structured_log
 
 logger = logging.getLogger("guardrails.deps")
 
-VAULT_KV_PATH = "guardrails/service_credential"
+VAULT_KV_PATH = "concierge/service_auth"
 _BOOT_CREDENTIAL: str | None = None
 
 

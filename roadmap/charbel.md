@@ -123,6 +123,21 @@ PR link or commit SHA in the trailing parenthesis.
       health endpoint returns model_hash not service field
 - [x] Validated: 7/7 integration tests pass with full stack running
 
+## Phase 2.3 — Fix CI on fix-tests branch (Jana's guardrails)
+
+- [x] evals/security/pyproject.toml: added PyJWT>=2.8
+      (fixes: No module named 'jwt' in security gates CI)
+- [x] guardrails/pyproject.toml: added setuptools>=69.0
+      (fixes: pkg_resources availability for opentelemetry)
+- [x] guardrails/app/main.py: wrapped FastAPIInstrumentor import
+      in try/except, guarded instrument_app with _OTEL_AVAILABLE
+      (fixes: ModuleNotFoundError: No module named 'opentelemetry')
+- [x] guardrails/app/deps.py: VAULT_KV_PATH fixed from
+      guardrails/service_credential to concierge/service_auth
+      (same root cause as modelserver fix — path never seeded)
+- [x] guardrails container: healthy on /healthz after fixes
+- [x] 90 passed, 13 skipped, 0 failed locally
+
 ## What's left for Jana on this branch (updated)
 - test_provisioning.py and test_rls.py errors are Mohammad's tests
   connecting to postgres hostname — needs conftest fix or integration
@@ -312,3 +327,6 @@ gets rejected. CORS is defense-in-depth, not the boundary.
   localhost:8080. Blocked on localhost:8090 CSP violation confirmed.
   Security fixes: get_chat_user dual-key auth, verify_sub fix,
   tenant_id from JWT.
+- Fixed Jana's fix-tests branch: PyJWT in evals/security,
+  setuptools in guardrails, opentelemetry try/except in main.py,
+  Vault path fix in deps.py. Guardrails healthy. 90/0 tests.

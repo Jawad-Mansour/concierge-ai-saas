@@ -18,7 +18,12 @@ from pathlib import Path
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+
+try:
+    from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+    _OTEL_AVAILABLE = True
+except (ModuleNotFoundError, ImportError):
+    _OTEL_AVAILABLE = False
 
 from . import rails_engine, redaction, telemetry, validators, version
 from .deps import fetch_vault_credential, require_service_credential
@@ -57,7 +62,8 @@ def create_app() -> FastAPI:
     telemetry.init(service_name="guardrails")
 
     app = FastAPI(title="Concierge guardrails")
-    FastAPIInstrumentor.instrument_app(app)
+    if _OTEL_AVAILABLE:
+        FastAPIInstrumentor.instrument_app(app)
 
     @app.get("/healthz")
     def healthz():
