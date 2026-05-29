@@ -389,6 +389,128 @@ the LLM stub layer is even reached.
 
 Test panel produces identical sidecar responses to the live chat path.
 
+Pre-demo dress rehearsal surfaced four real bugs across the stack.
+Three were on Charbel's slice and got fixed; one was on Ali's slice
+and got patched cooperatively to unblock the demo.
+
+### Bugs found and fixed
+
+- [x] `demo/host/public/index.html` — hardcoded `data-widget-id`
+      mismatched Acme's real widget_id after fresh seed. Swapped
+      manually; demo-host required `docker compose build --no-cache`
+      because the cached layer kept the old value.
+- [x] `backend/app/api/widget_js.py` — the `/widget.js` loader read
+      `data-widget-id` from the script tag correctly but didn't pass
+      it into the iframe. The iframe src was hardcoded to
+      `http://localhost:8081/`. Result: the widget container loaded
+      its own bundle (with its own hardcoded widget_id in App.tsx)
+      and ignored the embedding page entirely. Fixed: loader now
+      appends `?widget_id=<encoded>` to the iframe URL.
+- [x] `widget/src/App.tsx` — React widget had a hardcoded constant
+      `const WIDGET_ID = '042016b1-...'`. Replaced with
+      `new URLSearchParams(window.location.search).get('widget_id')`.
+      The widget now mounts with whatever widget_id the parent page
+      passes via the iframe URL. `widget/src/auth.ts` was already
+      parameterized correctly — no changes needed there.
+- [x] `docker-compose.yml` — backend container had no
+      `ANTHROPIC_API_KEY` in its environment, despite the host having
+      it in `.env`. Mohammad's pattern routes secrets via Vault, but
+      `AnthropicAgentPlanner` uses `os.getenv()` directly. Added
+      `ANTHROPIC_API_KEY` and `ANTHROPIC_MODEL` env passthrough so
+      the agent planner can authenticate. Acceptable demo-time
+      shortcut; the cleaner fix is to read from Vault in the planner
+      (followup for after Friday).
+
+### Cross-slice fix (coordinated with Ali)
+
+- [x] `backend/app/services/agent_service.py` — `AnthropicAgentPlanner`
+      was crashing two ways: (a) defaulted to `claude-3-5-haiku-latest`
+      which was retired Feb 19, 2026; (b) used plain JSON-in-text
+      prompting, but newer Claude models wrap responses in prose so
+      `json.loads()` crashes. Switched to Anthropic tool-use API with
+      a `plan_action` tool schema — Claude returns structured JSON
+      natively in `content[].input`, no parsing required. Updated
+      test fixture in `test_agent_tools.py` to match the new response
+      shape. Default model bumped to `claude-haiku-4-5-20251001`.
+
+### End-to-end verified at demo dress rehearsal
+
+- [x] Two tenants seeded (acme-coffee, brew-bar). Each has separate
+      widget config, guardrails config, allowed origins, JWTs.
+- [x] Tenant admin sees only their own tenant's data (Phase 2 cross-
+      tenant isolation check passed manually).
+- [x] Widget loads on `localhost:8080` (allowed host), blocked on
+      `localhost:8090` (CSP violation in DevTools console).
+- [x] All three live widget messages produce correct behavior:
+      - "tell me about your coffee" → real Claude response, stays on
+        topic, passes output rail.
+      - "I want to speak to a manager" → escalation_trigger fires
+        pre-LLM, response: "I will flag this for human follow-up."
+      - "What is the weather today?" → off_topic rule fires pre-LLM,
+        response uses the tenant's persona template:
+        "I can only help with coffee, espresso, beans. That falls
+         outside what I can answer here."
+- [x] Defense-in-depth: even when the agent (or its stub) returns
+      off-topic content, the output rail catches it. Same allowed_topics
+      policy guards both input and output paths.
+
+## Phase 6.3 — Real LLM end-to-end (Fri 2026-05-29, late night)
+
+After the dress rehearsal at 11pm, the team agreed to fix the agent
+LLM path so the chat reply is grounded in tenant content rather than
+falling through to stubs. Three coupled bugs surfaced and got fixed.
+
+### Bugs found and fixed
+
+- [x] `AnthropicAgentPlanner` defaulted to `claude-3-5-haiku-latest`
+      (retired Feb 19, 2026, returns 404). Bumped default to
+      `claude-haiku-4-5-20251001`.
+- [x] `AnthropicAgentPlanner` used plain JSON-in-text prompting.
+      Newer Claude models wrap structured output in prose, so
+      `json.loads()` crashed. Switched to Anthropic tool-use API
+      with a `plan_action` tool schema — Claude returns structured
+      JSON natively in `content[].input`, no parsing.
+- [x] `AnthropicAgentPlanner._user_prompt` didn't include tool call
+      results. So when Claude picked `rag_search` then tried to
+      compose `final_response`, it had no content to reference and
+      produced generic replies that failed `screen_output`. Fixed:
+      tool results (RAG `answer_context`, lead/escalation status)
+      now appended to the user prompt before the second iteration.
+- [x] `AgentService.run` crashed with 500 when a tool's own
+      validation failed (e.g. `capture_lead` called without email
+      or phone). Wrapped tool calls in defensive try/except:
+      validation failures are now reported as tool-result feedback
+      so the planner can recover gracefully, ask the visitor for
+      missing info, or pick a different tool.
+- [x] `InMemoryEmbeddingRepository` in `chat.py` had one hardcoded
+      chunk with `tenant_id="demo-tenant"` — no real tenant ever
+      matched. Replaced with per-tenant seed (two coffee chunks for
+      acme-coffee, two tea chunks for brew-bar) keyed by real
+      tenant UUIDs read from the DB at startup. Falls back to the
+      original demo chunk if DB lookup fails.
+- [x] `docker-compose.yml` — passed `ANTHROPIC_API_KEY` and
+      `ANTHROPIC_MODEL` through to backend container.
+      `AnthropicAgentPlanner` reads from `os.getenv`. Mohammad's
+      Vault pattern still holds the canonical secret; the env
+      passthrough is a demo-time shortcut, noted as a followup.
+
+### Verified end-to-end
+
+- pytest 42/42 green (test_agent_tools + test_chat)
+- acme-coffee live widget flow:
+    - "tell me about your coffee" → real Claude response mentioning
+      espresso/Ethiopia/Colombia from the seeded chunks
+    - "tell me about your beans" → real Claude response mentioning
+      medium-roast/cold brew/French press
+    - "I want to speak to a manager" → escalation pre-LLM
+    - "What is the weather today?" → off_topic refusal pre-LLM
+- brew-bar live widget flow:
+    - "tell me about your tea" → tea-specific response (jasmine,
+      oolong, chai, earl grey). No coffee content. Cross-tenant
+      isolation confirmed at the content layer.
+- Test cases that previously crashed with 500 now return 200 with
+  graceful planner recovery.
+
 ## Phase 7 — Friday demo polish
 
 - [ ] Update `deliverables/RUNBOOK.md` §6 with the demo script
