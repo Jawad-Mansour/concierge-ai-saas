@@ -13,7 +13,7 @@ import { ChatWindow } from './components/ChatWindow'
 // exchangeToken (which will 401 on /chat). The demo uses an admin JWT
 // obtained via POST /auth/login instead.
 const API_URL = 'http://localhost:8000'
-const WIDGET_ID = '042016b1-c2b7-445b-8dd9-3aa1fcfbaddd'
+const widgetId = new URLSearchParams(window.location.search).get('widget_id')
 const GREETING = 'Hi! How can I help you today?'
 
 function generateId(): string {
@@ -33,7 +33,11 @@ export default function App() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    exchangeToken(WIDGET_ID, window.location.origin)
+    if (!widgetId) {
+      setError('Widget not configured')
+      return
+    }
+    exchangeToken(widgetId, window.location.origin)
       .then(t => setToken(t))
       .catch(err => {
         console.warn('[Concierge] Token exchange failed:', err)
