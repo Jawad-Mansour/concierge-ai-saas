@@ -55,9 +55,6 @@ minio-data/
 redis-data/
 vault-data/
 
-# Model artifacts (binaries excluded; the model card + SHA stays in git)
-modelserver/artifacts/*.onnx
-modelserver/artifacts/*.joblib
 
 # Eval outputs
 evals/**/results/

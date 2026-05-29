@@ -30,10 +30,10 @@ class TestHealthEndpoints:
         assert "model_hash" in data   # real implementation returns model hash
 
     def test_guardrails_health(self):
-        """Guardrails /health returns 200 with correct shape."""
-        data = _get("http://localhost:8002/health")
+        """Guardrails /healthz returns 200 with status ok."""
+        data = _get("http://localhost:8002/healthz")
         assert data["status"] == "ok"
-        assert data["service"] == "guardrails"
+        assert "rails_version" in data
 
     def test_admin_health(self):
         """Streamlit admin health endpoint returns ok."""

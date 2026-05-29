@@ -48,6 +48,18 @@ A single failure in this gate is a hard CI block regardless of all other gate sc
 
 **Baseline**: Set by Jana once the first production-quality model is trained. Until then, threshold is `0.0` (non-blocking) in `eval_thresholds.yaml`.
 
+### Bake-off Table (Principle III)
+
+Reproduce with `python modelserver/training/evaluate_models.py`. The three candidates are evaluated on the same held-out set; the dataset commit-SHA appears in the harness output and in the row below. Numbers are filled when the bake-off runs.
+
+| Candidate | Macro-F1 | p95 latency (ms) | Artifact size (bytes) | Cost / 1k (USD) | Notes |
+|-----------|----------|------------------|-----------------------|-----------------|-------|
+| A — classical sklearn (TF-IDF + LogReg/GB) | TBD | TBD | TBD | 0.0 | Picks the better of LogReg / GradientBoosting on val by macro-F1. |
+| B — small deep ONNX (1D-CNN over hashed char n-grams) | TBD | TBD | TBD | 0.0 | Exported with `opset_version=17` + a numerical-equivalence check. |
+| C — hosted LLM zero-shot | TBD | TBD | TBD | TBD | Pinned model identifier in `model_card.md`. Cost = price/1k tokens × avg tokens/call. |
+
+Dataset commit SHA: filled by `evaluate_models.py` at run time.
+
 ---
 
 ## Agent Tool-Selection Eval

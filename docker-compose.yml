@@ -154,6 +154,9 @@ services:
       - "${MODELSERVER_PORT:-8001}:8001"
     volumes:
       - ./modelserver/app:/app/app
+      # Defense-in-depth: artifacts live in the image; mounting RO ensures a
+      # mistakenly mutable mount can't replace the SHA-verified artifact at runtime.
+      - ./modelserver/artifacts:/app/artifacts:ro
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
       interval: 10s
@@ -163,18 +166,23 @@ services:
 
   guardrails:
     build: ./guardrails
+    # Two workers per research.md Decision 3 open risk "Tail latency under burst load".
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8002", "--workers", "2"]
     depends_on:
       vault-init:
         condition: service_completed_successfully
     environment:
       <<: *vault-env
       VAULT_ADDR: http://vault:8200
+      GUARDRAILS_SERVICE_CREDENTIAL: ${GUARDRAILS_SERVICE_CREDENTIAL:-}
     ports:
       - "${GUARDRAILS_PORT:-8002}:8002"
     volumes:
       - ./guardrails/app:/app/app
+      # Configs hash-locked at build time; RO mount is defense-in-depth.
+      - ./guardrails/config:/app/config:ro
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8002/health')"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8002/healthz')"]
       interval: 10s
       timeout: 5s
       retries: 5
