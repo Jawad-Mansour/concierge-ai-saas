@@ -3,6 +3,7 @@
 """Admin widget config endpoints — tenant_admin role required."""
 
 import json
+from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
@@ -125,3 +126,99 @@ def get_embed_snippet(
         f'data-widget-id="{row[0]}"></script>'
     )
     return {"snippet": snippet}
+
+
+# ── Guardrails config ─────────────────────────────────────────────────────────
+
+class RefusalPersona(BaseModel):
+    voice: str
+    template: str
+
+
+class EscalationTrigger(BaseModel):
+    kind: Literal["keyword", "intent"]
+    value: str
+
+
+class GuardrailsConfigResponse(BaseModel):
+    allowed_topics: list[str] | None = None
+    refusal_persona: RefusalPersona | None = None
+    escalation_triggers: list[EscalationTrigger] | None = None
+
+
+class GuardrailsConfigUpdate(BaseModel):
+    allowed_topics: list[str] | None = None
+    refusal_persona: RefusalPersona | None = None
+    escalation_triggers: list[EscalationTrigger] | None = None
+
+
+_GR_COLS = "allowed_topics, refusal_persona, escalation_triggers"
+
+
+@router.get("/guardrails-config", response_model=GuardrailsConfigResponse)
+def get_guardrails_config(
+    claims: UserClaims = Depends(get_current_user),
+    db: Session = Depends(get_tenant_db),
+) -> dict:
+    _require_tenant_admin(claims)
+    row = db.execute(
+        text(f"SELECT {_GR_COLS} FROM guardrails_configs WHERE tenant_id = CAST(:tid AS uuid)"),
+        {"tid": claims.tenant_id},
+    ).fetchone()
+    if row is None:
+        raise HTTPException(status_code=404, detail="No guardrails config for this tenant")
+    return dict(row._mapping)
+
+
+@router.put("/guardrails-config", response_model=GuardrailsConfigResponse)
+def upsert_guardrails_config(
+    body: GuardrailsConfigUpdate,
+    claims: UserClaims = Depends(get_current_user),
+    db: Session = Depends(get_tenant_db),
+) -> dict:
+    _require_tenant_admin(claims)
+
+    existing = db.execute(
+        text("SELECT id FROM guardrails_configs WHERE tenant_id = CAST(:tid AS uuid)"),
+        {"tid": claims.tenant_id},
+    ).fetchone()
+
+    params: dict = {
+        "tid": claims.tenant_id,
+        "allowed_topics": body.allowed_topics or [],
+        "refusal_persona": (
+            json.dumps(body.refusal_persona.model_dump()) if body.refusal_persona else None
+        ),
+        "escalation_triggers": json.dumps(
+            [t.model_dump() for t in body.escalation_triggers] if body.escalation_triggers else []
+        ),
+    }
+
+    if existing:
+        row = db.execute(
+            text(f"""
+                UPDATE guardrails_configs
+                SET allowed_topics       = :allowed_topics,
+                    refusal_persona      = CAST(:refusal_persona AS jsonb),
+                    escalation_triggers  = CAST(:escalation_triggers AS jsonb),
+                    updated_at           = NOW()
+                WHERE tenant_id = CAST(:tid AS uuid)
+                RETURNING {_GR_COLS}
+            """),
+            params,
+        ).fetchone()
+    else:
+        row = db.execute(
+            text(f"""
+                INSERT INTO guardrails_configs
+                    (tenant_id, allowed_topics, refusal_persona, escalation_triggers)
+                VALUES
+                    (CAST(:tid AS uuid), :allowed_topics,
+                     CAST(:refusal_persona AS jsonb), CAST(:escalation_triggers AS jsonb))
+                RETURNING {_GR_COLS}
+            """),
+            params,
+        ).fetchone()
+
+    db.commit()
+    return dict(row._mapping)  # type: ignore[union-attr]
