@@ -28,6 +28,13 @@ def main() -> None:
         st.error("Not authenticated.")
         st.stop()
 
+    flash = st.session_state.pop("wc_flash", None)
+    if flash:
+        if flash["type"] == "success":
+            st.success(flash["message"])
+        elif flash["type"] == "error":
+            st.error(flash["message"])
+
     st.header("Widget config")
 
     # ── A: Current config ────────────────────────────────────────────────────
@@ -106,13 +113,14 @@ def main() -> None:
                 timeout=10,
             )
             resp.raise_for_status()
-            st.success("Widget config saved.")
             for k in ["wc_edit_origins", "wc_edit_primary", "wc_edit_greeting", "wc_edit_tools",
                       "wc_display_primary", "wc_display_tools"]:
                 st.session_state.pop(k, None)
+            st.session_state["wc_flash"] = {"type": "success", "message": "Saved successfully."}
             st.rerun()
         except requests.RequestException as exc:
-            st.error(f"Save failed: {exc}")
+            st.session_state["wc_flash"] = {"type": "error", "message": f"Save failed: {exc}"}
+            st.rerun()
 
     st.divider()
 

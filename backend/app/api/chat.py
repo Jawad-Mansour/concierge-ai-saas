@@ -6,6 +6,7 @@ from dataclasses import asdict
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, ConfigDict, Field
+from sqlalchemy.orm import Session
 
 from app.db import SessionLocal
 from app.middleware.auth_middleware import UserClaims, oauth2_scheme
@@ -183,7 +184,7 @@ async def chat(
                 guardrail_client,
                 tenant_id=tenant_id,
                 message=body.message,
-                tenant_config=None,
+                tenant_config=guardrails_repo.get_for_tenant(db, tenant_id) or {},
             )
             if reply.escalate:
                 return {
@@ -210,7 +211,7 @@ async def chat(
                 guardrail_client,
                 tenant_id=tenant_id,
                 llm_response=response.message,
-                tenant_config=None,
+                tenant_config=guardrails_repo.get_for_tenant(db, tenant_id) or {},
             )
             if decision.decision == "block":
                 response = type(response)(

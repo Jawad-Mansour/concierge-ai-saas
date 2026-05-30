@@ -48,7 +48,6 @@ def _show_logout_sidebar() -> None:
             st.session_state.clear()
             st.query_params.clear()
             st.rerun()
-        st.caption("Toggle theme: ☰ → Settings")
 
 
 # ── Auth gate ────────────────────────────────────────────────────────────────
@@ -72,10 +71,6 @@ def _coming_soon_leads() -> None:
     st.info("Leads dashboard — coming soon.")
 
 
-def _coming_soon_guardrails() -> None:
-    st.info("Guardrails config — coming soon (coordinate with Jana).")
-
-
 pg = st.navigation(
     {
         "Configuration": [
@@ -83,12 +78,14 @@ pg = st.navigation(
             st.Page(
                 "pages/tenant_settings.py", title="Tenant settings", icon=":material/person:"
             ),
+            st.Page(
+                "pages/guardrails_config.py",
+                title="Guardrails config",
+                icon=":material/shield:",
+            ),
         ],
         "Coming soon": [
             st.Page(_coming_soon_leads, title="Leads dashboard", icon=":material/bar_chart:"),
-            st.Page(
-                _coming_soon_guardrails, title="Guardrails config", icon=":material/shield:"
-            ),
         ],
     }
 )

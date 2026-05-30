@@ -25,7 +25,7 @@ def serve_widget_js() -> str:
   console.log('[Concierge] widget.js loaded, widget_id:', widgetId);
 
   const iframe = document.createElement('iframe');
-  iframe.src = 'http://localhost:8081/';
+  iframe.src = `http://localhost:8081/?widget_id=${encodeURIComponent(widgetId)}`;
   iframe.style.cssText = [
     'position:fixed',
     'bottom:0',
