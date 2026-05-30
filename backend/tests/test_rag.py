@@ -1,17 +1,31 @@
 # Owner: Ali
 import pytest
+import sys
+from pathlib import Path
 
 from app.repositories.cms_repo import InMemoryCmsRepository
-from app.repositories.embedding_repo import EmbeddingChunk, InMemoryEmbeddingRepository
+from app.repositories.embedding_repo import (
+    EmbeddingChunk,
+    InMemoryEmbeddingRepository,
+    InMemoryVectorEmbeddingRepository,
+)
 from app.services.embedding_service import (
     EmbeddingService,
     IngestionValidationError,
 )
+from app.services.embedding_provider import HashingEmbeddingProvider, VoyageEmbeddingProvider
+from app.services.rag_answer_service import AnthropicRagAnswerGenerator
 from app.services.rag_service import (
     CrossTenantRetrievalError,
     RagService,
     RagValidationError,
 )
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from evals.rag import eval_rag  # noqa: E402
 
 
 def rag_repo():
@@ -168,6 +182,123 @@ def test_ingest_cms_content_creates_tenant_scoped_chunks_searchable_by_rag():
     assert rag_result.citations[0].cms_content_id == "cms-a-hours"
 
 
+def test_ingest_cms_content_generates_embeddings_for_vector_retrieval():
+    cms_repo = InMemoryCmsRepository()
+    embedding_provider = HashingEmbeddingProvider(dimensions=16)
+    embedding_repo = InMemoryVectorEmbeddingRepository(
+        embedding_provider=embedding_provider,
+    )
+    ingestion = EmbeddingService(
+        cms_repository=cms_repo,
+        embedding_repository=embedding_repo,
+        embedding_provider=embedding_provider,
+        chunk_size_words=8,
+        chunk_overlap_words=2,
+    )
+
+    ingestion.ingest_content(
+        {
+            "tenant_id": "tenant-a",
+            "content_id": "cms-a-support",
+            "title": "Support",
+            "body": "Premium onboarding support is available every weekday.",
+        }
+    )
+    result = RagService(embedding_repo, strategy="semantic_vector").search(
+        rag_payload(query="weekday onboarding support", top_k=1)
+    )
+
+    assert result.status == "ok"
+    assert result.retrieval_meta.strategy == "semantic_vector"
+    assert result.citations[0].cms_content_id == "cms-a-support"
+
+
+def test_voyage_embedding_provider_uses_voyage_api(monkeypatch):
+    calls = []
+
+    def fake_post_json(url, payload, headers, timeout_seconds):
+        calls.append((url, payload, headers, timeout_seconds))
+        return {"data": [{"embedding": [0.1, 0.2, 0.3]}]}
+
+    monkeypatch.setenv("VOYAGE_API_KEY", "test-voyage-key")
+    provider = VoyageEmbeddingProvider(
+        model="voyage-3.5",
+        post_json=fake_post_json,
+    )
+
+    embedding = provider.embed_text("sample tenant text")
+
+    assert embedding == [0.1, 0.2, 0.3]
+    assert calls[0][0] == "https://api.voyageai.com/v1/embeddings"
+    assert calls[0][1] == {"model": "voyage-3.5", "input": ["sample tenant text"]}
+    assert calls[0][2]["authorization"] == "Bearer test-voyage-key"
+
+
+def test_voyage_embedding_provider_records_cost(monkeypatch):
+    class CostTracker:
+        def __init__(self):
+            self.calls = []
+
+        def record_embedding_call(self, **kwargs):
+            self.calls.append(kwargs)
+
+    monkeypatch.setenv("VOYAGE_API_KEY", "test-voyage-key")
+    cost_tracker = CostTracker()
+    provider = VoyageEmbeddingProvider(
+        model="voyage-3.5",
+        post_json=lambda *_args: {"data": [{"embedding": [0.1, 0.2]}]},
+        cost_tracker=cost_tracker,
+    )
+
+    provider.embed_text("sample tenant text", tenant_id="tenant-a")
+
+    assert cost_tracker.calls == [
+        {
+            "tenant_id": "tenant-a",
+            "provider": "voyage",
+            "model": "voyage-3.5",
+            "input_count": 1,
+        }
+    ]
+
+
+def test_anthropic_rag_answer_generator_records_usage(monkeypatch):
+    class CostTracker:
+        def __init__(self):
+            self.calls = []
+
+        def record_llm_call(self, **kwargs):
+            self.calls.append(kwargs)
+
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-anthropic-key")
+    cost_tracker = CostTracker()
+    generator = AnthropicRagAnswerGenerator(
+        model="test-claude",
+        post_json=lambda *_args: {
+            "content": [{"text": "Generated answer."}],
+            "usage": {"input_tokens": 42, "output_tokens": 7},
+        },
+        cost_tracker=cost_tracker,
+    )
+
+    answer = generator.generate(
+        question="What are the hours?",
+        contexts=["Open Monday through Friday."],
+        tenant_id="tenant-a",
+    )
+
+    assert answer == "Generated answer."
+    assert cost_tracker.calls == [
+        {
+            "tenant_id": "tenant-a",
+            "provider": "anthropic",
+            "model": "test-claude",
+            "input_tokens": 42,
+            "output_tokens": 7,
+        }
+    ]
+
+
 def test_ingest_cms_content_rejects_unknown_or_empty_fields():
     ingestion = EmbeddingService(cms_repository=InMemoryCmsRepository())
 
@@ -221,3 +352,124 @@ def test_ingest_cms_repository_lists_only_same_tenant_chunks():
     assert {chunk.tenant_id for chunk in cms_repo.list_chunks(tenant_id="tenant-a")} == {
         "tenant-a"
     }
+
+
+def test_rag_eval_loads_corpus_jsonl_into_chunks(tmp_path):
+    corpus_path = tmp_path / "corpus.jsonl"
+    corpus_path.write_text(
+        "\n".join(
+            [
+                "# Owner: Ali",
+                (
+                    '{"chunk_id":"chunk-a","tenant_id":"tenant-a",'
+                    '"cms_content_id":"cms-a","title":"Pricing",'
+                    '"text":"Team pricing starts at 49 dollars.",'
+                    '"url":"https://tenant-a.example/pricing",'
+                    '"content_type":"page","locale":"en","published":true}'
+                ),
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    chunks = eval_rag.load_corpus(corpus_path)
+
+    assert chunks == [
+        EmbeddingChunk(
+            chunk_id="chunk-a",
+            tenant_id="tenant-a",
+            cms_content_id="cms-a",
+            title="Pricing",
+            text="Team pricing starts at 49 dollars.",
+            url="https://tenant-a.example/pricing",
+            content_type="page",
+            locale="en",
+            published=True,
+        )
+    ]
+
+
+def test_rag_eval_loads_golden_jsonl_into_cases(tmp_path):
+    golden_path = tmp_path / "golden.jsonl"
+    golden_path.write_text(
+        "\n".join(
+            [
+                "# Owner: Ali",
+                (
+                    '{"name":"pricing","tenant_id":"tenant-a",'
+                    '"query":"How much is pricing?",'
+                    '"expected_chunk_id":"chunk-a"}'
+                ),
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    cases = eval_rag.load_cases(golden_path)
+
+    assert cases == [
+        eval_rag.RagEvalCase(
+            name="pricing",
+            tenant_id="tenant-a",
+            query="How much is pricing?",
+            expected_chunk_id="chunk-a",
+        )
+    ]
+
+
+def test_rag_eval_succeeds_when_expected_chunks_are_retrieved(tmp_path):
+    corpus_path = tmp_path / "corpus.jsonl"
+    golden_path = tmp_path / "golden.jsonl"
+    corpus_path.write_text(
+        "\n".join(
+            [
+                "# Owner: Ali",
+                (
+                    '{"chunk_id":"chunk-a","tenant_id":"tenant-a",'
+                    '"cms_content_id":"cms-a","title":"Pricing",'
+                    '"text":"Team pricing starts at 49 dollars."}'
+                ),
+            ]
+        ),
+        encoding="utf-8",
+    )
+    golden_path.write_text(
+        "\n".join(
+            [
+                "# Owner: Ali",
+                (
+                    '{"name":"pricing","tenant_id":"tenant-a",'
+                    '"query":"What does team pricing cost?",'
+                    '"expected_chunk_id":"chunk-a"}'
+                ),
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    result = eval_rag.run_eval(
+        eval_rag.build_service(corpus_path),
+        eval_rag.load_cases(golden_path),
+        top_k=1,
+    )
+
+    assert result.total == 1
+    assert result.hits == 1
+    assert result.recall_at_k == 1.0
+    assert result.failures == []
+
+
+def test_rag_eval_rejects_malformed_jsonl(tmp_path):
+    corpus_path = tmp_path / "corpus.jsonl"
+    corpus_path.write_text("# Owner: Ali\n{not-json}\n", encoding="utf-8")
+
+    with pytest.raises(eval_rag.RagEvalDatasetError, match="not valid JSON"):
+        eval_rag.load_corpus(corpus_path)
+
+
+def test_rag_eval_rejects_empty_golden_set(tmp_path):
+    golden_path = tmp_path / "golden.jsonl"
+    golden_path.write_text("# Owner: Ali\n\n", encoding="utf-8")
+
+    with pytest.raises(eval_rag.RagEvalDatasetError, match="at least one data row"):
+        eval_rag.load_cases(golden_path)

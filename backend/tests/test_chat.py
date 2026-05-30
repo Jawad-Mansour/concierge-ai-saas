@@ -17,6 +17,7 @@ from app.services.agent_service import (
 from app.services.chat_service import ChatService, ChatValidationError
 from app.services.lead_service import LeadService
 from app.services.memory_service import InMemoryMemoryStore, MemoryService
+from app.services.rag_runtime import build_embedding_service, reset_runtime_stores_for_tests
 from app.services.rag_service import RagService
 from app.services.router_service import RouterService
 
@@ -58,6 +59,21 @@ class SequencePlanner:
         return self.plans[len(tool_calls)]
 
 
+class FixedRagAnswerGenerator:
+    def __init__(self):
+        self.calls = []
+
+    def generate(self, *, question, contexts, tenant_id=None):
+        self.calls.append(
+            {
+                "question": question,
+                "contexts": contexts,
+                "tenant_id": tenant_id,
+            }
+        )
+        return "Synthesized answer from retrieved context."
+
+
 def chat_payload(**overrides):
     payload = {
         # Mocked Mohammad/Charbel-owned auth input:
@@ -72,6 +88,12 @@ def chat_payload(**overrides):
     }
     payload.update(overrides)
     return payload
+
+
+def chat_body(**overrides):
+    payload = chat_payload(**overrides)
+    payload.pop("tenant_id", None)
+    return ChatRequestBody(**payload)
 
 
 def rag_service():
@@ -115,6 +137,30 @@ def test_chat_routes_faq_to_rag_and_stores_memory():
             conversation_id="conversation-a",
         )
     ] == ["user", "assistant"]
+
+
+def test_chat_synthesizes_rag_answer_from_retrieved_context():
+    generator = FixedRagAnswerGenerator()
+    service = ChatService(
+        memory_service=memory_service(),
+        router_service=RouterService(
+            classifier=FixedClassifier("faq", 0.92),
+            rag_tool=rag_service(),
+        ),
+        rag_answer_generator=generator,
+    )
+
+    response = service.handle_message(chat_payload())
+
+    assert response.decision == "rag"
+    assert response.message == "Synthesized answer from retrieved context."
+    assert generator.calls == [
+        {
+            "question": "What does the team plan cost?",
+            "contexts": ["Team pricing starts at 49 dollars per month."],
+            "tenant_id": "tenant-a",
+        }
+    ]
 
 
 def test_chat_uses_agent_when_router_hands_off():
@@ -186,11 +232,10 @@ async def test_chat_api_reads_classifier_from_app_state():
         router_service=RouterService(rag_tool=rag_service()),
     )
 
-    body_data = {k: v for k, v in chat_payload().items() if k != "tenant_id"}
     claims = UserClaims(user_id=None, tenant_id="tenant-a", role="member")
     response = await chat(
         request,
-        ChatRequestBody(**body_data),
+        chat_body(),
         claims=claims,
         chat_service=service,
     )
@@ -198,6 +243,46 @@ async def test_chat_api_reads_classifier_from_app_state():
     assert response["decision"] == "rag"
     assert classifier.calls == [
         {"tenant_id": "tenant-a", "message": "What does the team plan cost?"}
+    ]
+
+
+@pytest.mark.anyio
+async def test_chat_api_prefers_trusted_request_tenant_over_body_tenant():
+    classifier = AsyncClassifierClient(JanaClassification("FAQ", 0.91))
+    request = SimpleNamespace(
+        state=SimpleNamespace(tenant_id="trusted-tenant"),
+        app=SimpleNamespace(state=SimpleNamespace(classifier_client=classifier)),
+    )
+    service = ChatService(
+        memory_service=memory_service(),
+        router_service=RouterService(
+            rag_tool=RagService(
+                InMemoryEmbeddingRepository(
+                    [
+                        EmbeddingChunk(
+                            chunk_id="trusted-pricing",
+                            tenant_id="trusted-tenant",
+                            cms_content_id="trusted-cms",
+                            title="Trusted Pricing",
+                            text="Trusted tenant pricing is 75 dollars per month.",
+                        )
+                    ]
+                )
+            )
+        ),
+    )
+
+    response = await chat(
+        request,
+        chat_body(message="What does trusted tenant pricing cost?"),
+        claims=UserClaims(user_id=None, tenant_id="claim-tenant", role="member"),
+        chat_service=service,
+    )
+
+    assert response["decision"] == "rag"
+    assert response["message"] == "Trusted tenant pricing is 75 dollars per month."
+    assert classifier.calls == [
+        {"tenant_id": "trusted-tenant", "message": "What does trusted tenant pricing cost?"}
     ]
 
 
@@ -278,3 +363,40 @@ def test_chat_router_is_mounted_for_ui_integration():
     paths = {route.path for route in app.routes}
 
     assert "/chat" in paths
+    assert "/cms/ingest" in paths
+
+
+def test_chat_factory_answers_from_ingested_cms_rag_content(monkeypatch):
+    class BrokenRedisMemoryStore:
+        def __init__(self):
+            raise RuntimeError("redis unavailable")
+
+    reset_runtime_stores_for_tests()
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "replace-me")
+    monkeypatch.setattr(chat_api, "RedisMemoryStore", BrokenRedisMemoryStore)
+    build_embedding_service().ingest_content(
+        {
+            "tenant_id": "tenant-runtime-rag",
+            "content_id": "cms-runtime-hours",
+            "title": "Store Hours",
+            "body": "The tenant runtime store is open Monday through Friday from nine to five.",
+            "url": "https://tenant-runtime.example/hours",
+            "published": True,
+        }
+    )
+
+    service = chat_api.build_chat_service()
+    response = service.handle_message(
+        chat_payload(
+            tenant_id="tenant-runtime-rag",
+            conversation_id="conversation-runtime-rag",
+            visitor_session_id="visitor-runtime-rag",
+            message="When is the tenant runtime store open Monday Friday?",
+        ),
+        classification=JanaClassification("FAQ", 0.95),
+    )
+
+    assert response.decision == "rag"
+    assert response.message == (
+        "The tenant runtime store is open Monday through Friday from nine to five."
+    )

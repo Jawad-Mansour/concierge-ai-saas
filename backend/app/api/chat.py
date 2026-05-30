@@ -8,11 +8,8 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Session
 
-from app.db import get_db
+from app.db import SessionLocal
 from app.middleware.auth_middleware import UserClaims, oauth2_scheme
-from app.services.auth_service import verify_token
-from app.repositories import guardrails_repo
-from app.repositories.embedding_repo import EmbeddingChunk, InMemoryEmbeddingRepository
 from app.repositories.lead_repo import InMemoryLeadRepository
 from app.services.agent_service import (
     AgentService,
@@ -20,9 +17,19 @@ from app.services.agent_service import (
     HeuristicAgentPlanner,
     ToolRegistry,
 )
+from app.services.auth_service import verify_token
 from app.services.chat_service import ChatService, ChatValidationError
 from app.services.lead_service import LeadService
 from app.services.memory_service import InMemoryMemoryStore, MemoryService, RedisMemoryStore
+from app.services.rag_answer_service import (
+    AnthropicRagAnswerGenerator,
+    ExtractiveRagAnswerGenerator,
+)
+from app.services.rag_runtime import (
+    build_pgvector_rag_service,
+    build_rag_service,
+    use_pgvector_backend,
+)
 from app.services.rag_service import RagService
 from app.services.router_service import RouterService
 
@@ -50,56 +57,41 @@ class ChatRequestBody(BaseModel):
     trace_id: str | None = None
 
 
-def build_chat_service() -> ChatService:
-    from sqlalchemy import create_engine, text
-    import os
+def tenant_id_from_request(request: Request, fallback_tenant_id: str) -> str:
+    for source in (getattr(request, "state", None), request.app.state):
+        if source is None:
+            continue
+        tenant_id = getattr(source, "tenant_id", None)
+        if tenant_id:
+            return str(tenant_id)
+        claims = getattr(source, "claims", None)
+        tenant_id = getattr(claims, "tenant_id", None)
+        if tenant_id:
+            return str(tenant_id)
+    return fallback_tenant_id
 
-    chunks: list[EmbeddingChunk] = []
-    try:
-        engine = create_engine(os.environ["DATABASE_URL"])
-        with engine.connect() as conn:
-            rows = conn.execute(text("SELECT slug, id::text FROM tenants")).fetchall()
-        seeds = {
-            "acme-coffee": [
-                ("Our Coffee", "Acme Coffee serves single-origin espresso, pour-over coffee, and whole bean varieties from Ethiopia and Colombia."),
-                ("Brewing Methods", "We offer espresso, pour-over, French press, and cold brew. Our beans are medium-roast and lightly oily."),
-            ],
-            "brew-bar": [
-                ("Our Tea", "Brew Bar serves artisan teas, matcha lattes, and seasonal pastries."),
-                ("Menu", "Featured drinks include jasmine green tea, oolong, chai latte, and earl grey."),
-            ],
-        }
-        for slug, tenant_id in rows:
-            for i, (title, text_content) in enumerate(seeds.get(slug, [])):
-                chunks.append(EmbeddingChunk(
-                    chunk_id=f"{slug}-chunk-{i}",
-                    tenant_id=tenant_id,
-                    cms_content_id=f"{slug}-cms-{i}",
-                    title=title,
-                    text=text_content,
-                    url=f"https://{slug}.example/menu",
-                ))
-    except Exception as e:
-        # Fall back to original demo chunk if DB lookup fails (shouldn't happen at runtime)
-        import logging
-        logging.warning(f"RAG seed lookup failed, using fallback: {e}")
-        chunks = [EmbeddingChunk(
-            chunk_id="demo-pricing",
-            tenant_id="demo-tenant",
-            cms_content_id="demo-cms-pricing",
-            title="Demo Pricing",
-            text="Acme Coffee serves single-origin espresso, pour-over coffee, and whole bean varieties.",
-            url="https://demo.example/pricing",
-        )]
 
-    rag_service = RagService(InMemoryEmbeddingRepository(chunks))
+def build_chat_service(*, db=None) -> ChatService:
+    rag_service = build_pgvector_rag_service(db) if db is not None else build_rag_service()
     lead_service = LeadService(repository=InMemoryLeadRepository())
     memory_service = MemoryService(build_memory_store())
     return ChatService(
         memory_service=memory_service,
         router_service=RouterService(rag_tool=rag_service, lead_tool=lead_service),
         agent_service=build_agent_service(rag_service=rag_service, lead_service=lead_service),
+        rag_answer_generator=build_rag_answer_generator(),
     )
+
+
+def get_chat_service():
+    if not use_pgvector_backend():
+        yield build_chat_service()
+        return
+    db = SessionLocal()
+    try:
+        yield build_chat_service(db=db)
+    finally:
+        db.close()
 
 
 def build_memory_store():
@@ -127,6 +119,12 @@ def build_agent_service(*, rag_service: RagService, lead_service: LeadService) -
 def _has_anthropic_key() -> bool:
     key = os.getenv("ANTHROPIC_API_KEY", "").strip()
     return bool(key and key != "replace-me")
+
+
+def build_rag_answer_generator():
+    if _has_anthropic_key():
+        return AnthropicRagAnswerGenerator()
+    return ExtractiveRagAnswerGenerator()
 
 
 def get_chat_user(
@@ -162,14 +160,16 @@ async def chat(
     request: Request,
     body: ChatRequestBody,
     claims: UserClaims = Depends(get_chat_user),
-    chat_service: ChatService = Depends(build_chat_service),
-    db: Session = Depends(get_db),
+    chat_service: ChatService = Depends(get_chat_service),
 ):
     tenant_id = claims.tenant_id
     if not tenant_id:
         raise HTTPException(status_code=401, detail="tenant_id missing from token")
 
     try:
+        tenant_id = tenant_id_from_request(request, tenant_id)
+        payload = body.model_dump()
+        payload["tenant_id"] = tenant_id
         classifier_client = getattr(request.app.state, "classifier_client", None)
         guardrail_client = getattr(request.app.state, "guardrail_client", None)
         classification = None
@@ -202,7 +202,7 @@ async def chat(
                 }
 
         response = chat_service.handle_message(
-            {**body.model_dump(), "tenant_id": tenant_id},
+            payload,
             classification=classification,
         )
 

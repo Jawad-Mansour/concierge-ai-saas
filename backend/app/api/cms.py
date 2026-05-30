@@ -3,20 +3,20 @@ from __future__ import annotations
 
 from dataclasses import asdict
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.repositories.cms_repo import InMemoryCmsRepository
-from app.repositories.embedding_repo import InMemoryEmbeddingRepository
+from app.db import SessionLocal
 from app.services.embedding_service import EmbeddingService, IngestionValidationError
+from app.services.rag_runtime import (
+    build_embedding_service,
+    build_pgvector_embedding_service,
+    list_runtime_chunks,
+    use_pgvector_backend,
+)
 
 
 router = APIRouter(prefix="/cms", tags=["cms"])
-
-# Mocked Mohammad-owned persistence/RLS dependency:
-# replace these in-memory stores with tenant-scoped DB + pgvector repositories.
-_cms_repo = InMemoryCmsRepository()
-_embedding_repo = InMemoryEmbeddingRepository()
 
 
 class CmsIngestBody(BaseModel):
@@ -32,27 +32,51 @@ class CmsIngestBody(BaseModel):
     published: bool = True
 
 
-def get_embedding_service() -> EmbeddingService:
-    return EmbeddingService(
-        cms_repository=_cms_repo,
-        embedding_repository=_embedding_repo,
-    )
+def tenant_id_from_request(request: Request, fallback_tenant_id: str) -> str:
+    for source in (getattr(request, "state", None), request.app.state):
+        if source is None:
+            continue
+        tenant_id = getattr(source, "tenant_id", None)
+        if tenant_id:
+            return str(tenant_id)
+        claims = getattr(source, "claims", None)
+        tenant_id = getattr(claims, "tenant_id", None)
+        if tenant_id:
+            return str(tenant_id)
+    return fallback_tenant_id
+
+
+def get_embedding_service():
+    if not use_pgvector_backend():
+        yield build_embedding_service()
+        return
+    db = SessionLocal()
+    try:
+        yield build_pgvector_embedding_service(db)
+        db.commit()
+    finally:
+        db.close()
 
 
 @router.post("/ingest")
 def ingest_content(
+    request: Request,
     body: CmsIngestBody,
     embedding_service: EmbeddingService = Depends(get_embedding_service),
 ):
     try:
-        return asdict(embedding_service.ingest_content(body.model_dump()))
+        payload = body.model_dump()
+        payload["tenant_id"] = tenant_id_from_request(request, body.tenant_id)
+        return asdict(embedding_service.ingest_content(payload))
     except IngestionValidationError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
 
 @router.get("/chunks")
 def list_chunks(
+    request: Request,
     # Mocked tenant input until tenant-admin auth derives this from session context.
     tenant_id: str = Query(min_length=1),
 ):
-    return [asdict(chunk) for chunk in _cms_repo.list_chunks(tenant_id=tenant_id)]
+    resolved_tenant_id = tenant_id_from_request(request, tenant_id)
+    return [asdict(chunk) for chunk in list_runtime_chunks(tenant_id=resolved_tenant_id)]

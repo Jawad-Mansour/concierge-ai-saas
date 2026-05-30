@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.services.agent_service import AgentService
 from app.services.memory_service import MemoryService
+from app.services.rag_answer_service import RagAnswerGenerator
 from app.services.router_service import Classification, RouterService
 
 
@@ -66,10 +67,12 @@ class ChatService:
         memory_service: MemoryService,
         router_service: RouterService,
         agent_service: AgentService | None = None,
+        rag_answer_generator: RagAnswerGenerator | None = None,
     ) -> None:
         self.memory_service = memory_service
         self.router_service = router_service
         self.agent_service = agent_service
+        self.rag_answer_generator = rag_answer_generator
 
     def handle_message(
         self,
@@ -145,6 +148,12 @@ class ChatService:
         if decision == "drop":
             return "I cannot help with that request."
         if decision == "rag" and rag_context:
+            if self.rag_answer_generator is not None:
+                return self.rag_answer_generator.generate(
+                    question=request.message,
+                    contexts=rag_context,
+                    tenant_id=request.tenant_id,
+                )
             return rag_context[0]
         if decision == "agent":
             if self.agent_service is None:
